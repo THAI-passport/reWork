@@ -140,6 +140,32 @@ class Rebuild(unittest.TestCase):
         self.assertEqual(open(os.path.join(self.t, "SOURCES")).read(), before)
         self.assertIn("accepted_new_hash=1", open(os.path.join(self.t, "BUILD-INFO.txt")).read())
 
+    def test_pin_warnings_for_floating_url_and_missing_copy(self):
+        x = self.sources(URL="https://example.invalid/app?version=latest")
+        r = self.run_("demo", "--dry-run", "--local-file", x)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("floating 'latest' link", r.stderr)
+        self.assertIn("COPY_LOCATION is not set", r.stderr)
+
+    def test_no_pin_warnings_for_a_versioned_url_with_a_copy_location(self):
+        x = self.sources(URL="https://example.invalid/app-1.0.xapk", COPY_LOCATION="owner box /srv/art/app-1.0.xapk")
+        r = self.run_("demo", "--dry-run", "--local-file", x)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertNotIn("warning:", r.stderr)
+
+    def test_mismatch_message_says_new_release_is_a_new_entry(self):
+        x = self.sources(SHA256="0" * 64)
+        r = self.run_("demo", "--local-file", x, path=self.tools())
+        self.assertEqual(r.returncode, 3)
+        self.assertIn("NEW pinned entry", r.stderr)
+        r = self.run_("demo", "--local-file", x, "--accept-new-hash", path=self.tools())
+        self.assertIn("not a pin", r.stderr)
+
+    def test_pin_rule_is_in_agents_template_and_skill(self):
+        for rel, needle in (("AGENTS.md", "never by a floating"), ("templates/SOURCES.md", "COPY_LOCATION"),
+                            (".claude/skills/re-acquire/SKILL.md", "Pin, do not float")):
+            self.assertIn(needle, open(os.path.join(ROOT, rel)).read(), rel)
+
     # behaviour -----------------------------------------------------------------------------------------------
     def test_dry_run_writes_nothing(self):
         x = self.sources()

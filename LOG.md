@@ -43,3 +43,8 @@ Problems hit while building reWork's own tools (target problems go in `targets/<
 - Problem: a new agent's default was to download and decompile, which repeats work, and results of a pass were not recorded where the next agent looks.
 - Cause: no rule said when a rebuild is justified or what to record afterwards.
 - Solution: AGENTS.md "Rebuild only when necessary" and "After every decompile pass" (PROTOCOL, FACTS, LOG, matching skill = reWork's SOP), repeated in the re-static, re-acquire and re-workflow skills; QUICKSTART in the task-pack template; a test that scripts named in docs exist. Status: Solved as process.
+
+## 2026-10-12, pinning: floating latest links
+- Problem: a SOURCES file could pin a hash while its only URL was a floating "latest" link, and `--accept-new-hash` could be used to move on after a vendor update without a record, so the next machine would pin something else.
+- Cause: the rebuild tool only checked hashes; nothing asked for a versioned URL, an owner-controlled copy or a new entry per release.
+- Solution: AGENTS.md rule (pin by version and SHA-256, new release is a new pinned entry, never edit the old hash), `COPY_LOCATION` field and template text, warnings for a floating-only URL or a missing copy location, mismatch and accept messages that say so, tests.

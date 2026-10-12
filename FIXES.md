@@ -11,6 +11,7 @@ Things that need fixing in reWork itself (tools, templates, skills), and things 
 - iOS, desktop and firmware notes in the skills are thin.
 
 ## Fixed
+- Pinning was only a hash check: added the pin rule to AGENTS.md, `COPY_LOCATION` and URL2 guidance in the SOURCES template, pin warnings and clearer mismatch and accept messages in the rebuild tool, with tests.
 - Hash mismatch after a vendor update now names the real version; URL2 to URL4 fallbacks; rebuild-only-when-necessary and record-after-every-pass rules in AGENTS.md and the skills; QUICKSTART in the task-pack template; test that scripts mentioned in docs exist.
 - Hardware recon had no reusable form that a weaker agent could follow: added `templates/tasks/` (README, SW-RECON, HW-RECON, ASSUMPTIONS, STATUS) copied by `rw.py init`, the `re-hardware-recon` skill, `tools/notify_log.py`, `tools/make_test_media.py`, and rules in `re-client-sim` (log pushed status, no-delta option) and `AGENTS.md` (writing for weaker agents). Derived from the reBeamBox task pack.
 - Rebuild and setup were bash-only (`sha256sum`, `declare -A`, linux-x64 JDK URL), so they failed on macOS and Windows: rewrote both in Python 3 standard library (`rebuild_analysis.py`, `setup_tools.py`), kept the .sh files as wrappers, added OS/arch detection, the macOS JDK bundle layout, zsh PATH line, apktool.bat, and tests.
