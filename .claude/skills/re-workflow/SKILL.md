@@ -10,6 +10,7 @@ Entry point. Input is `Reverse engineer: <device/app>. Goal: <client behaviour>.
 ## Steps
 1. **G0 Brief.** Pick a short slug (lowercase, dashes). Run `python tools/rw.py init <slug> --name "<name>" --goal "<goal>"`. Run `python tools/rw.py doctor` and note missing tools in LOG.md. Write defaults you chose in TARGET.md Assumptions: static only, Android first, Python client, local-only.
 2. **Identify the target software.** If only hardware names were given (model numbers, a brand), follow `re-acquire` section "From hardware name to app".
+   If the artifacts are not on this machine (new container, other agent), rebuild them first: `bash tools/rebuild-analysis.sh <slug> --dry-run`, then without `--dry-run` (see `re-acquire`, section "Make it rebuildable"). Never continue past a hash mismatch.
 3. Run gates G1 to G4 with the skills named in AGENTS.md. After each gate: update the gate table in TARGET.md, append problems to LOG.md, commit, push.
 4. **G5 Handoff.** Fill HANDOFF.md from the template: what exists, evidence summary (counts of C/V/H/W/I/U), unknowns that need hardware, the first-session checklist (read-only probe first, capture everything, one write at a time), and the safe-write policy.
 

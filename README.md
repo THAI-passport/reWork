@@ -36,6 +36,7 @@ Pass criteria: `targets/<slug>/` has SOURCES.md with hashes, a PROTOCOL.md where
 | `tools/crcfind.py` | Identify a CRC from sample frames |
 | `tools/setup-tools.sh` | User-space JDK, jadx, apktool, venv (no sudo) |
 | `tools/recover-failed-methods.sh` | Second-chance decompile via simple mode and CFR |
+| `tools/rebuild-analysis.sh` | Rebuild a target's artifacts and jadx tree from SOURCES: hash-verified, idempotent, `--dry-run` |
 
 ## Manual quick start
 ```

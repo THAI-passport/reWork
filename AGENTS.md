@@ -24,6 +24,7 @@ Conflicting values live only in `targets/<slug>/FACTS.md`; other docs link there
 
 ## Logs you maintain
 - Problem log: `targets/<slug>/LOG.md` records every problem hit, with the evidence, the cause, and the fix, or "open" plus what is needed. Read it before resuming a target. Append the moment something goes wrong, in the same commit as the related change when practical.
+- Tooling log: `LOG.md` at the repo root records problems in reWork's own tools, same format.
 - Fixes list: `FIXES.md` at the repo root has "Open" and "Fixed". Anything you find that needs fixing (a tool bug, a template gap, a skill that misled you) goes under Open; when fixed, move it to Fixed with what was wrong and what changed. Same commit as the change.
 - When a log entry repeats across targets, promote it into the matching skill and delete the repetition.
 
@@ -50,6 +51,7 @@ Real systems means a physical device, a vendor server, a store listing, or any l
 - Work in phases: a coherent chunk that passes its own checks (tests, `python tools/rw.py lint`). Commit after every finished phase; push after every gate. Message format: `<slug> G<n>: <what the phase delivers>` plus a short body.
 - Never push to `main` directly. Use the designated work branch and offer a pull request when a gate set is done; do not open one unasked.
 - Capture-independent work (pure codecs, state machines, simulators, tests) may be built before hardware or captures exist. Capture-dependent work (timings, real limits, vendor quirks) waits for real data. Mark built-ahead work as such; no claim becomes `[H]` without hardware evidence.
+- Artifacts are rebuildable: record URL, SHA-256 and version in the machine-readable block of `SOURCES.md`, and on another machine run `bash tools/rebuild-analysis.sh <slug>` (try `--dry-run` first). It refuses to continue on a hash mismatch; `--accept-new-hash` only prints the new hash and edits nothing, and needs the user told. If the artifact cannot be rebuilt, say so and ask for the file.
 - Stop and ask when a step needs the user: logins, installs needing root, payments, providing hardware, or approving a write to a real device.
 - Never commit `.env`, tokens, signed URLs, personal data (addresses, phone numbers, account ids, device serials, MAC addresses), or captures that contain them. Scrub before saving; mask addresses by default.
 
@@ -66,7 +68,7 @@ targets/<slug>/      one directory per target, created by `python tools/rw.py in
 client/<slug>/       original client code, simulator, tests (created at gate 4)
 FIXES.md             open and fixed issues in this repo itself
 templates/           copied by init
-tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.py, setup-tools.sh
+tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.py, setup-tools.sh, rebuild-analysis.sh
 ```
 
 ## Gates (do not skip, do not reorder)

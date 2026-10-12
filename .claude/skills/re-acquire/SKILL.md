@@ -27,6 +27,13 @@ description: Find, download, validate and hash the companion app, firmware or bi
 ## Record
 `python tools/rw.py hash targets/<slug>/artifacts/<file> --slug <slug>` prints size and SHA-256 (and XAPK manifest fields) and appends a row to SOURCES.md. Add the inner base APK too. Run `python tools/rw.py lint` and confirm nothing vendor-owned is tracked (`git ls-files | grep -Ei 'apk|xapk|dex|\.so'` must be empty).
 
+## Make it rebuildable
+After hashing, fill the machine-readable block in `targets/<slug>/SOURCES.md` (template fields: NAME_FILE, VERSION, KIND, URL, SHA256, INNER_APK/INNER_SHA256 for an xapk, optional ABI split, tool pins). Then another machine, or a fresh container, can run:
+`bash tools/rebuild-analysis.sh <slug> --dry-run` (plan), then `bash tools/rebuild-analysis.sh <slug>` (download, verify, extract, jadx, `targets/<slug>/BUILD-INFO.txt`).
+- A hash mismatch stops the run (exit 3). `--accept-new-hash` prints the new hash and continues without editing anything; use it only after telling the user and checking why the file changed, then update SOURCES yourself.
+- `--local-file PATH` skips the download; `--force` redoes steps; `--recover` runs the CFR recovery for `RECOVER_CLASS`.
+- If a target has no usable URL (login-gated), say so and ask the user for the file; do not guess.
+
 ## Other artifact kinds
 - iOS: IPA is a zip; `Payload/*.app/Info.plist`; the binary is Mach-O (decrypt requirement means static analysis may be blocked; say so).
 - Firmware images: record vendor URL and hash; use `binwalk`-style extraction only if the user owns the device.
