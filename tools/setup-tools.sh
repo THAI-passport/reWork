@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # Installs RE tools (JDK, jadx, apktool) into ~/tools without sudo, plus a venv at the repo root. Idempotent.
-# Versions are "latest" at run time; record them in targets/<slug>/LOG.md via `python tools/rw.py doctor`.
+# jadx and apktool are pinned (JADX_VERSION, APKTOOL_VERSION); the JDK is the latest 17 at run time. Record versions in targets/<slug>/LOG.md via `python tools/rw.py doctor`.
 # Usage: scripts/setup-tools.sh [--full | --emulation]
 #   default      JDK, jadx, apktool, and a venv with pytest, bleak, pillow; never needs a compiler
 #   --emulation  also install the emulation extras (unicorn, capstone, pyelftools); a failed build is reported, not fatal
 #   --full       same as --emulation
 set -euo pipefail
 EMU=0
+# Pinned versions (override with the environment); a target SOURCES file may pin the same jadx version
+JADX_VERSION="${JADX_VERSION:-1.5.6}"; APKTOOL_VERSION="${APKTOOL_VERSION:-3.0.3}"
 for a in "$@"; do
   case "$a" in
     --full|--emulation) EMU=1 ;;
@@ -22,13 +24,13 @@ if [ ! -d "$T/jdk" ]; then
 fi
 export JAVA_HOME="$T/jdk" PATH="$T/jdk/bin:$PATH"
 if [ ! -d "$T/jadx" ]; then
-  V=$(curl -fsSL https://api.github.com/repos/skylot/jadx/releases/latest | python3 -c 'import sys,json;print(json.load(sys.stdin)["tag_name"].lstrip("v"))')
+  V="$JADX_VERSION"
   curl -fL "https://github.com/skylot/jadx/releases/download/v$V/jadx-$V.zip" -o jadx.zip
   mkdir jadx && unzip -q jadx.zip -d jadx && rm jadx.zip
 fi
 if [ ! -f "$T/apktool/apktool.jar" ]; then
   mkdir -p apktool
-  U=$(curl -fsSL https://api.github.com/repos/iBotPeaches/Apktool/releases/latest | python3 -c 'import sys,json;print([a["browser_download_url"] for a in json.load(sys.stdin)["assets"] if a["name"].endswith(".jar")][0])')
+  U="https://github.com/iBotPeaches/Apktool/releases/download/v$APKTOOL_VERSION/apktool_$APKTOOL_VERSION.jar"
   curl -fL "$U" -o apktool/apktool.jar
   printf '#!/usr/bin/env bash\nexec "%s/jdk/bin/java" -jar "%s/apktool/apktool.jar" "$@"\n' "$T" "$T" > apktool/apktool
   chmod +x apktool/apktool

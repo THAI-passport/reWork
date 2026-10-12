@@ -18,3 +18,4 @@ __pycache__/
 *.egg-info/
 reports/*
 !reports/README.md
+targets/*/BUILD-INFO.txt
