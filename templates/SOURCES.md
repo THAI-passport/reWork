@@ -19,6 +19,7 @@ Fill these in after G1 so another machine can rebuild the artifacts and the deco
 # VERSION=<version name>
 # KIND=apk | xapk | other
 # URL=<public download URL, no token>
+# URL2=<optional: versioned or private mirror of the same file, tried if URL gives another hash>
 # SHA256=<sha256 of the downloaded file, lowercase>
 # xapk only:
 # INNER_APK=<base apk name inside the archive>

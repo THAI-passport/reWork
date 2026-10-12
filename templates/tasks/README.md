@@ -2,12 +2,15 @@
 
 Written for an AI agent or a person who has not seen this project. Follow it literally. Where it is silent, make an assumption using the policy below, write it down, and keep going.
 
+Start with `QUICKSTART.md`: a one-page table of which tasks apply to you.
+
 Goal of the target: {{goal}}
 Evidence tags: `[C]` confirmed in the artifact, `[V]` verified by emulation or test vector, `[H]` confirmed on real hardware, `[W]` third-party claim, `[I]` inferred, `[U]` unknown.
 
 ## Files
 | File | Purpose |
 |---|---|
+| `QUICKSTART.md` | One page: which tasks apply to your situation, ten rules |
 | `SW-RECON.md` | Software tasks S0 to S9: no hardware, an AI can do them alone |
 | `HW-RECON.md` | Hardware tasks HW-0 and up: need a physical device and a machine with the right radio/port |
 | `ASSUMPTIONS.md` | Pre-made assumptions and the log of new ones |

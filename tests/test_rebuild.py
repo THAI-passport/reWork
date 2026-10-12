@@ -245,6 +245,29 @@ class Rebuild(unittest.TestCase):
         self.assertEqual(r.returncode, 2)
         self.assertIn("RECOVER_CLASS", r.stderr)
 
+    def test_fallback_url_is_tried_when_first_download_has_wrong_hash(self):
+        x = self.sources(URL=None)
+        good = x + ".good"
+        shutil.copyfile(x, good)
+        os.remove(x)
+        wrong = os.path.join(self.d, "wrong.bin")
+        open(wrong, "wb").write(b"a newer release")
+        with open(os.path.join(self.t, "SOURCES"), "a") as f:
+            f.write("URL=file:///%s\nURL2=file:///%s\n" % (wrong.lstrip("/"), good.lstrip("/")))
+        r = self.run_("demo", path=self.tools())
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("trying the next URL", r.stdout)
+
+    def test_mismatch_explains_the_version_in_the_downloaded_xapk(self):
+        self.sources()
+        newer = os.path.join(self.d, "newer.xapk")
+        with zipfile.ZipFile(newer, "w") as z:
+            z.writestr("manifest.json", '{"version_name": "9.9.9", "version_code": 99}')
+        r = self.run_("demo", "--local-file", newer)
+        self.assertEqual(r.returncode, 3)
+        self.assertIn("9.9.9", r.stderr)
+        self.assertIn("pins version 1.0", r.stderr)
+
     # repo wiring ---------------------------------------------------------------------------------------------
     def test_template_has_machine_readable_block_that_parses(self):
         text = open(os.path.join(ROOT, "templates", "SOURCES.md")).read()

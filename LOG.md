@@ -33,3 +33,13 @@ Problems hit while building reWork's own tools (target problems go in `targets/<
 - Problem: the first hardware checklist (in the reBeamBox project) contradicted its own safety tooling: an identical-rewrite test is skipped by the delta guard, the minimum interval and daily cap were not budgeted, the free-space number was never printed, and nothing said which steps a cloud agent can actually do.
 - Cause: the checklist predated the guard and the first-contact tooling, and mixed background with procedure.
 - Solution: generic task pack in `templates/tasks/`, a `re-hardware-recon` skill, a write-budget step, a no-delta option requirement, status-message logging requirement. Status: Solved in templates; untested on a real target.
+
+## 2026-10-12, a hash mismatch after a vendor release gave no clue why
+- Problem: SOURCES pins a hash but a vendor "latest" link moves; the rebuild stopped with two hashes and nothing else, and only one URL could be configured.
+- Cause: one URL, no version information in the error.
+- Solution: `rebuild_analysis.py` prints the version the downloaded XAPK reports against the pinned one and tries URL, URL2, URL3, URL4 in order. Tests added. Status: Solved.
+
+## 2026-10-12, fresh instances rebuilt by reflex and findings were not written back
+- Problem: a new agent's default was to download and decompile, which repeats work, and results of a pass were not recorded where the next agent looks.
+- Cause: no rule said when a rebuild is justified or what to record afterwards.
+- Solution: AGENTS.md "Rebuild only when necessary" and "After every decompile pass" (PROTOCOL, FACTS, LOG, matching skill = reWork's SOP), repeated in the re-static, re-acquire and re-workflow skills; QUICKSTART in the task-pack template; a test that scripts named in docs exist. Status: Solved as process.

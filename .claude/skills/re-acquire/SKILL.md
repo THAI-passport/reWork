@@ -31,6 +31,7 @@ description: Find, download, validate and hash the companion app, firmware or bi
 After hashing, fill the machine-readable block in `targets/<slug>/SOURCES.md` (template fields: NAME_FILE, VERSION, KIND, URL, SHA256, INNER_APK/INNER_SHA256 for an xapk, optional ABI split, tool pins). Then another machine, or a fresh container, can run:
 `bash tools/rebuild-analysis.sh <slug> --dry-run` (plan), then `bash tools/rebuild-analysis.sh <slug>` (download, verify, extract, jadx, `targets/<slug>/BUILD-INFO.txt`).
 - A hash mismatch stops the run (exit 3). `--accept-new-hash` prints the new hash and continues without editing anything; use it only after telling the user and checking why the file changed, then update SOURCES yourself.
+- Several sources: `URL2` to `URL4` in the SOURCES block are tried in order after `URL`; the first whose file matches the pinned hash wins. Record a versioned or private mirror there, because vendor `latest` links move. On a mismatch the tool prints the version the downloaded XAPK reports against the pinned one; a different version means a new release, so re-audit claims instead of accepting the hash.
 - `--local-file PATH` skips the download; `--force` redoes steps; `--recover` runs the CFR recovery for `RECOVER_CLASS`.
 - If a target has no usable URL (login-gated), say so and ask the user for the file; do not guess.
 

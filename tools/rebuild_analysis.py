@@ -23,6 +23,7 @@ Output (all git-ignored): targets/<name>/artifacts, work, decompiled, BUILD-INFO
 """
 import datetime
 import hashlib
+import json
 import os
 import platform
 import re
@@ -54,6 +55,17 @@ def sha256_file(path):
         for chunk in iter(lambda: f.read(1 << 20), b""):
             h.update(chunk)
     return h.hexdigest()
+
+
+
+def version_note(path, pinned):
+    """If `path` is an XAPK with a manifest.json, say which version it really is (explains a hash mismatch after a vendor update)."""
+    try:
+        with zipfile.ZipFile(path) as z:
+            m = json.loads(z.read("manifest.json"))
+        return "the file says version_name=%s version_code=%s; SOURCES pins version %s" % (m.get("version_name"), m.get("version_code"), pinned)
+    except Exception:  # noqa: BLE001
+        return ""
 
 
 def tool_path():
@@ -144,6 +156,7 @@ class Run:
     def __init__(self, o):
         self.o = o
         self.mismatch_accepted = False
+        self.pinned = ""
 
     def verify(self, path, expected, label):
         got = sha256_file(path)
@@ -151,6 +164,9 @@ class Run:
             say("sha256 ok: " + label)
             return
         sys.stderr.write("error: sha256 mismatch for %s\n  expected: %s\n  actual:   %s\n" % (label, expected, got))
+        note = version_note(path, self.pinned)
+        if note:
+            sys.stderr.write("  note: %s. A moved 'latest' URL is the usual cause: find the exact file, then pass --local-file or add it as URL2.\n" % note)
         if self.o["accept"]:
             sys.stderr.write("  --accept-new-hash given: continuing. Record this hash yourself in SOURCES if it is the new reference; no file was edited.\n")
             return
@@ -208,6 +224,7 @@ def rebuild(argv):
         raise Fail(2, "no SOURCES or SOURCES.md in targets/%s" % o["target"])
     S, srel, kind = parse_sources(src, root)
     r = Run(o)
+    r.pinned = S["VERSION"]
     dry, force = o["dry"], o["force"]
     art = os.path.join(T, "artifacts", S["NAME_FILE"])
     W, OUT = os.path.join(T, "work"), os.path.join(T, "decompiled")
@@ -226,10 +243,14 @@ def rebuild(argv):
         fpath = art
         say("artifact already present: targets/%s/artifacts/%s" % (o["target"], S["NAME_FILE"]))
     else:
-        url = o["url"] or S.get("URL")
-        if not url:
-            raise Fail(2, "%s: no URL and artifact not present (add URL or pass --local-file)" % srel)
-        r.download(url, art)
+        urls = [o["url"]] if o["url"] else [S[k] for k in ("URL", "URL2", "URL3", "URL4") if S.get(k)]
+        if not urls:
+            raise Fail(2, "%s: no URL and %s not present (add URL or pass --local-file)" % (srel, "artifact"))
+        for i, url in enumerate(urls):
+            r.download(url, art)
+            if dry or not os.path.isfile(art) or sha256_file(art) == S["SHA256"] or i + 1 == len(urls):
+                break
+            say("hash does not match the file from this URL; trying the next URL (%d of %d)" % (i + 2, len(urls)))
         fpath = art
     if os.path.isfile(fpath):
         r.verify(fpath, S["SHA256"], "artifact")
