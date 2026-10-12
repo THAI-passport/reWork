@@ -31,5 +31,8 @@ Order: frame packer/parser, command classes (opcode in super constructor, params
 ## Multi-model families
 Put per-model differences in one table: transport, advertised name, picture size, limits, evidence. Keep the code path shared and the table as data.
 
+## Imported third-party documents
+Tag every claim `[W]`, whatever tag the document gives itself. Put each disagreement with the repo into a dated dispute section of FACTS.md and leave one pointer line in the imported file, not a second table. The repo position stands until code or hardware settles the row.
+
 ## Done when
 A person could implement a client from PROTOCOL.md alone, and each frame type has a worked example.

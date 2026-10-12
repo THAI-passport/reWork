@@ -34,5 +34,8 @@ D1 = F0 - F1 about payload and D2 about 0: one slot overwritten. D1 and D2 both 
 ## Destructive track gate
 Only the owner can approve (written, per unit). Plastic tools, battery disconnected first, no heat above about 60 C, measure the flash rail before attaching any programmer (a 3.3 V programmer destroys 1.8 V parts), check whether a dump point exists at all (flash may sit inside the SoC package), read twice and require identical hashes, store dumps outside git, commit only notes. Dump analysis (binwalk, strings, file-system, display init) is safe AI work on a supplied file.
 
+## Payload size table
+Before setting the write budget, dry-run each generated test file on each transport and record the payload sizes; budget from those, not from file sizes.
+
 ## Handoff quality bar
 A weaker agent can follow the pack without asking a question: every step has a command, an expected result and a decision; every unknown has an assumption and a test; every risk has a stop condition.
