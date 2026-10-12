@@ -1,0 +1,20 @@
+# Vendor artifacts and decompiler output never go into git
+targets/*/artifacts/
+targets/*/work/
+targets/*/decompiled/
+*.apk
+*.xapk
+*.apks
+*.aab
+*.ipa
+*.dex
+*.jar
+*.so
+*.bin.orig
+.venv/
+node_modules/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+reports/*
+!reports/README.md
