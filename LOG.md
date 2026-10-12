@@ -48,3 +48,8 @@ Problems hit while building reWork's own tools (target problems go in `targets/<
 - Problem: three skills written in reWatch (Jieli family, finding transports in decompiled Android code, HCI capture ingestion) and a budget-wearables note are device-class generic but lived only in the fork.
 - Cause: the fork was seeded before reWork collected them.
 - Solution: copied `re-jieli`, `re-ble-android-patterns`, `re-capture-ingestion` into reWork, added `knowledge/` with the wearables note (labelled `[W]`), and a next-pass prompt in `docs/`. Status: Solved; the skills still cite one worked example by name and should be reviewed for further genericising.
+
+## 2026-10-12, pinning: floating latest links
+- Problem: a SOURCES file could pin a hash while its only URL was a floating "latest" link, and `--accept-new-hash` could be used to move on after a vendor update without a record, so the next machine would pin something else.
+- Cause: the rebuild tool only checked hashes; nothing asked for a versioned URL, an owner-controlled copy or a new entry per release.
+- Solution: AGENTS.md rule (pin by version and SHA-256, new release is a new pinned entry, never edit the old hash), `COPY_LOCATION` field and template text, warnings for a floating-only URL or a missing copy location, mismatch and accept messages that say so, tests.

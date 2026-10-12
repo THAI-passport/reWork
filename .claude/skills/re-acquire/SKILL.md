@@ -27,6 +27,10 @@ description: Find, download, validate and hash the companion app, firmware or bi
 ## Record
 `python tools/rw.py hash targets/<slug>/artifacts/<file> --slug <slug>` prints size and SHA-256 (and XAPK manifest fields) and appends a row to SOURCES.md. Add the inner base APK too. Run `python tools/rw.py lint` and confirm nothing vendor-owned is tracked (`git ls-files | grep -Ei 'apk|xapk|dex|\.so'` must be empty).
 
+## Pin, do not float
+- A "latest" link is a hint, not a source. After download and validation record exact version, SHA-256, a versioned or mirrored URL (`URL2`) and where the owner-controlled exact copy lives (`COPY_LOCATION`, no secrets).
+- Rebuilds verify the pinned hash and refuse on mismatch. A new vendor release is a NEW pinned entry (new version, new hash); never edit the old hash. `--accept-new-hash` is for inspection only and the user must be told.
+
 ## Make it rebuildable
 After hashing, fill the machine-readable block in `targets/<slug>/SOURCES.md` (template fields: NAME_FILE, VERSION, KIND, URL, SHA256, INNER_APK/INNER_SHA256 for an xapk, optional ABI split, tool pins). Then another machine, or a fresh container, can run:
 `bash tools/rebuild-analysis.sh <slug> --dry-run` (plan), then `bash tools/rebuild-analysis.sh <slug>` (download, verify, extract, jadx, `targets/<slug>/BUILD-INFO.txt`).
