@@ -21,7 +21,8 @@ Pass criteria: `targets/<slug>/` has SOURCES.md with hashes, a PROTOCOL.md where
 ## What is inside
 | Path | Purpose |
 |---|---|
-| `AGENTS.md` | Contract: prompt format, ground rules, evidence tags, gates |
+| `AGENTS.md` | Contract: prompt format, ground rules, logs, platform and live-contact rules, workflow, evidence tags, gates |
+| `FIXES.md` | Open and fixed issues in reWork itself |
 | `CLAUDE.md` | Imports AGENTS.md for Claude Code |
 | `.claude/skills/re-workflow` | Orchestrator, entry point |
 | `.claude/skills/re-acquire` | Hardware name to app, download, validate, hash |

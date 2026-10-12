@@ -22,6 +22,37 @@ Everything else is optional (package name, artifact path, transport hint). If it
 `[C]` confirmed in the artifact (cite file and line or method) · `[V]` verified by an emulator or test vector against real code · `[H]` confirmed on real hardware (capture or report) · `[W]` third-party claim, unverified · `[I]` inferred · `[U]` unknown.
 Conflicting values live only in `targets/<slug>/FACTS.md`; other docs link there.
 
+## Logs you maintain
+- Problem log: `targets/<slug>/LOG.md` records every problem hit, with the evidence, the cause, and the fix, or "open" plus what is needed. Read it before resuming a target. Append the moment something goes wrong, in the same commit as the related change when practical.
+- Fixes list: `FIXES.md` at the repo root has "Open" and "Fixed". Anything you find that needs fixing (a tool bug, a template gap, a skill that misled you) goes under Open; when fixed, move it to Fixed with what was wrong and what changed. Same commit as the change.
+- When a log entry repeats across targets, promote it into the matching skill and delete the repetition.
+
+## Platform support
+- Supported for now: Linux (Debian/Ubuntu, including headless containers) and macOS. Others are paused: do not test on them or maintain their guides, but keep code portable (`os.path`, no shell-only syntax in Python tools).
+- When you add a dependency, script, or setup step, update `README.md` and `tools/setup-tools.sh`.
+- If the platform lacks something the work needs (no Bluetooth adapter, no display, no root, no network to a mirror), tell the user which platform, what is missing, and the options you see. Do not silently skip it or work around a design rule. Record it under Open in `FIXES.md`.
+- Say which platforms you actually ran a change on and which are untested.
+
+## Contact with real systems
+Real systems means a physical device, a vendor server, a store listing, or any live service. Static work on downloaded artifacts needs no permission; contact with real systems does.
+- Ask the user before every live session. Plan the budget up front (requests, connects, writes) and count everything, including clicks and retries.
+- Stop at the first sign of throttling, a verification page, a captcha, an auth challenge, or an unexpected device response. Do not push through.
+- Device writes follow the safe-write rule in ground rule 7. Read-only probing comes first, one write at a time after that.
+- Never place an order, enter credentials or payment data, solve a CAPTCHA or OTP, or log in with the user's account. Those are the user's steps; stop and ask.
+- No stealth plugins, fingerprint spoofing, header forgery, or protection bypass, even if a step seems to need it. Raise it with the user.
+
+## UI and docs style
+- No emoji anywhere in an interface, doc, or code. Use icon components (for example Lucide) in any UI.
+- Keep docs in your own words, plain and specific. Do not restate a fact that lives in FACTS.md; link it.
+
+## Build workflow
+- The plan lives in docs, not in your head: `targets/<slug>/TARGET.md` (goal, gates) and `PROTOCOL.md` (how things work). If a design decision changes, update the doc in the same commit.
+- Work in phases: a coherent chunk that passes its own checks (tests, `python tools/rw.py lint`). Commit after every finished phase; push after every gate. Message format: `<slug> G<n>: <what the phase delivers>` plus a short body.
+- Never push to `main` directly. Use the designated work branch and offer a pull request when a gate set is done; do not open one unasked.
+- Capture-independent work (pure codecs, state machines, simulators, tests) may be built before hardware or captures exist. Capture-dependent work (timings, real limits, vendor quirks) waits for real data. Mark built-ahead work as such; no claim becomes `[H]` without hardware evidence.
+- Stop and ask when a step needs the user: logins, installs needing root, payments, providing hardware, or approving a write to a real device.
+- Never commit `.env`, tokens, signed URLs, personal data (addresses, phone numbers, account ids, device serials, MAC addresses), or captures that contain them. Scrub before saving; mask addresses by default.
+
 ## Workspace layout
 ```
 targets/<slug>/      one directory per target, created by `python tools/rw.py init <slug>`
@@ -33,6 +64,7 @@ targets/<slug>/      one directory per target, created by `python tools/rw.py in
   HANDOFF.md         final report: what is done, what is unverified, next hardware steps
   artifacts/ work/   git-ignored
 client/<slug>/       original client code, simulator, tests (created at gate 4)
+FIXES.md             open and fixed issues in this repo itself
 templates/           copied by init
 tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.py, setup-tools.sh
 ```
