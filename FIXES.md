@@ -3,7 +3,6 @@
 Things that need fixing in reWork itself (tools, templates, skills), and things already fixed. Add to Open when you find something; move to Fixed with what was wrong and what changed. Same commit as the change.
 
 ## Open
-- Review `re-jieli`, `re-ble-android-patterns`, `re-capture-ingestion` (copied from reWatch) and remove any device-specific wording beyond labelled examples.
 - Skills and tools are untested end to end on a real target; run the benchmark in README.md and record gaps here.
 - `tools/setup_tools.py` pins jadx and apktool versions and verifies SHA-256 only when `JADX_SHA256`/`APKTOOL_SHA256` are set (it prints the computed hashes); the JDK is the latest 17. Pin real hashes once a machine with github access has downloaded them.
 - Windows is untested locally: CI covers `rebuild_analysis.py` and `setup_tools.py`, but the fake-jadx tests skip there and a real run on Windows has not happened. macOS is likewise untested locally (the JDK bundle layout is unit tested).
@@ -12,6 +11,7 @@ Things that need fixing in reWork itself (tools, templates, skills), and things 
 - iOS, desktop and firmware notes in the skills are thin.
 
 ## Fixed
+- Skills copied from reWatch (`re-jieli`, `re-ble-android-patterns`, `re-capture-ingestion`), `tools/notify_log.py` and the README examples named a specific badge or watch: reworded to generic devices and a placeholder slug; device notes stay in `knowledge/` (2026-10-12).
 - Pinning was only a hash check: added the pin rule to AGENTS.md, `COPY_LOCATION` and URL2 guidance in the SOURCES template, pin warnings and clearer mismatch and accept messages in the rebuild tool, with tests.
 - Hash mismatch after a vendor update now names the real version; URL2 to URL4 fallbacks; rebuild-only-when-necessary and record-after-every-pass rules in AGENTS.md and the skills; QUICKSTART in the task-pack template; test that scripts mentioned in docs exist.
 - Hardware recon had no reusable form that a weaker agent could follow: added `templates/tasks/` (README, SW-RECON, HW-RECON, ASSUMPTIONS, STATUS) copied by `rw.py init`, the `re-hardware-recon` skill, `tools/notify_log.py`, `tools/make_test_media.py`, and rules in `re-client-sim` (log pushed status, no-delta option) and `AGENTS.md` (writing for weaker agents). Derived from the reBeamBox task pack.
