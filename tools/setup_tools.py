@@ -71,7 +71,10 @@ def extract(archive, dest):
             z.extractall(dest)
     else:
         with tarfile.open(archive) as t:
-            t.extractall(dest)
+            if hasattr(tarfile, "data_filter"):
+                t.extractall(dest, filter="data")      # refuses absolute paths, links outside dest, device files
+            else:
+                t.extractall(dest)
 
 
 def find_java_home(root):
