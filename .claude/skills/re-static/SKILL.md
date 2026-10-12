@@ -5,7 +5,7 @@ description: Static analysis of an Android (and by analogy iOS or desktop) compa
 
 # re-static (gate G2)
 
-Setup: `bash tools/setup-tools.sh` (user-space JDK, jadx, apktool; no sudo). Then `python tools/rw.py doctor`.
+Setup: `python tools/setup_tools.py` (user-space JDK, jadx, apktool; no admin rights; Linux, macOS, Windows). Then `python tools/rw.py doctor`.
 
 ## Decompile
 ```

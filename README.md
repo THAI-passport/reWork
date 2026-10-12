@@ -34,13 +34,13 @@ Pass criteria: `targets/<slug>/` has SOURCES.md with hashes, a PROTOCOL.md where
 | `tools/rw.py` | `init`, `doctor`, `hash`, `recon`, `lint` (stdlib only) |
 | `tools/btcap.py` | btsnoop/pcap/pcapng to ATT write/notify table by UUID |
 | `tools/crcfind.py` | Identify a CRC from sample frames |
-| `tools/setup-tools.sh` | User-space JDK, jadx, apktool, venv (no sudo) |
+| `tools/setup_tools.py` | User-space JDK, jadx, apktool, venv (no admin rights); Linux, macOS, Windows. `setup-tools.sh` wraps it |
 | `tools/recover-failed-methods.sh` | Second-chance decompile via simple mode and CFR |
-| `tools/rebuild-analysis.sh` | Rebuild a target's artifacts and jadx tree from SOURCES: hash-verified, idempotent, `--dry-run` |
+| `tools/rebuild_analysis.py` | Rebuild a target's artifacts and jadx tree from SOURCES: hash-verified, idempotent, `--dry-run`, `--max-heap`, `--url`; Linux, macOS, Windows. `rebuild-analysis.sh` wraps it |
 
 ## Manual quick start
 ```
-bash tools/setup-tools.sh           # once, optional --emulation
+python tools/setup_tools.py        # once; optional --emulation (Windows: run it from PowerShell)
 python tools/rw.py doctor
 python tools/rw.py init t900 --name "T900 watch" --goal "sync status from CLI"
 python tools/rw.py hash targets/t900/artifacts/app.xapk --slug t900

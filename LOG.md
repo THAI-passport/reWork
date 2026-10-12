@@ -18,3 +18,13 @@ Problems hit while building reWork's own tools (target problems go in `targets/<
 - Problem: `--local-file` pointing at the artifacts directory made `cp` fail with "same file".
 - Cause: the copy into `targets/<slug>/artifacts` did not check for the same path.
 - Solution: skip the copy when `-ef` says both paths are one file.
+
+## 2026-10-12, rebuild and setup were not portable
+- Problem: `rebuild-analysis.sh` used `sha256sum` and `declare -A`; `setup-tools.sh` fetched linux/x64 only and edited only ~/.bashrc. None of it ran on macOS (bash 3.2, no sha256sum) or Windows.
+- Cause: bash chosen for convenience; GNU userland assumed.
+- Solution: reimplemented in Python 3 standard library, shell files became wrappers; the 18 existing tests passed unchanged against the port before new tests were added. Status: Solved for Linux (tested here); macOS and Windows are covered by CI and unit tests only.
+
+## 2026-10-12, cloud session cannot reach the download hosts
+- Problem: from a cloud container, `d.apkpure.com` and `api.adoptium.net` are unreachable and github release URLs return 403, so a rebuild stops at the download.
+- Cause: the environment network policy allows package managers and a short list of hosts.
+- Solution: add the hosts under Allowed domains in the environment settings, or pass `--local-file`. Documented in AGENTS.md. Status: needs the user.

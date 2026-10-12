@@ -29,8 +29,9 @@ Conflicting values live only in `targets/<slug>/FACTS.md`; other docs link there
 - When a log entry repeats across targets, promote it into the matching skill and delete the repetition.
 
 ## Platform support
-- Supported for now: Linux (Debian/Ubuntu, including headless containers) and macOS. Others are paused: do not test on them or maintain their guides, but keep code portable (`os.path`, no shell-only syntax in Python tools).
-- When you add a dependency, script, or setup step, update `README.md` and `tools/setup-tools.sh`.
+- Priority platforms: Linux (Debian/Ubuntu, including headless containers) and macOS. Windows is supported on a best-effort basis: the Python tools (`rw.py`, `rebuild_analysis.py`, `setup_tools.py`, `btcap.py`, `crcfind.py`) must run natively there; only `recover-failed-methods.sh` needs bash (Git Bash or WSL). Linux and macOS get tested; Windows is checked in CI only.
+- Write tools in Python 3 standard library, not bash, so one implementation serves all three. Shell files are thin wrappers. Use `os.path`/`pathlib`, `shutil.which`, no `sha256sum`/`declare -A`/GNU-only flags.
+- When you add a dependency, script, or setup step, update `README.md` and `tools/setup_tools.py`.
 - If the platform lacks something the work needs (no Bluetooth adapter, no display, no root, no network to a mirror), tell the user which platform, what is missing, and the options you see. Do not silently skip it or work around a design rule. Record it under Open in `FIXES.md`.
 - Say which platforms you actually ran a change on and which are untested.
 
@@ -51,7 +52,7 @@ Real systems means a physical device, a vendor server, a store listing, or any l
 - Work in phases: a coherent chunk that passes its own checks (tests, `python tools/rw.py lint`). Commit after every finished phase; push after every gate. Message format: `<slug> G<n>: <what the phase delivers>` plus a short body.
 - Never push to `main` directly. Use the designated work branch and offer a pull request when a gate set is done; do not open one unasked.
 - Capture-independent work (pure codecs, state machines, simulators, tests) may be built before hardware or captures exist. Capture-dependent work (timings, real limits, vendor quirks) waits for real data. Mark built-ahead work as such; no claim becomes `[H]` without hardware evidence.
-- Artifacts are rebuildable: record URL, SHA-256 and version in the machine-readable block of `SOURCES.md`, and on another machine run `bash tools/rebuild-analysis.sh <slug>` (try `--dry-run` first). It refuses to continue on a hash mismatch; `--accept-new-hash` only prints the new hash and edits nothing, and needs the user told. If the artifact cannot be rebuilt, say so and ask for the file.
+- Artifacts are rebuildable: record URL, SHA-256 and version in the machine-readable block of `SOURCES.md`, and on another machine run `python tools/rebuild_analysis.py <slug>` (try `--dry-run` first; `bash tools/rebuild-analysis.sh` is a wrapper). If the host is not reachable from a cloud session, add it to the environment's allowed domains or give the file with `--local-file`; use `--max-heap 3g` on small machines. It refuses to continue on a hash mismatch; `--accept-new-hash` only prints the new hash and edits nothing, and needs the user told. If the artifact cannot be rebuilt, say so and ask for the file.
 - Stop and ask when a step needs the user: logins, installs needing root, payments, providing hardware, or approving a write to a real device.
 - Never commit `.env`, tokens, signed URLs, personal data (addresses, phone numbers, account ids, device serials, MAC addresses), or captures that contain them. Scrub before saving; mask addresses by default.
 
@@ -68,7 +69,7 @@ targets/<slug>/      one directory per target, created by `python tools/rw.py in
 client/<slug>/       original client code, simulator, tests (created at gate 4)
 FIXES.md             open and fixed issues in this repo itself
 templates/           copied by init
-tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.py, setup-tools.sh, rebuild-analysis.sh
+tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.py, setup_tools.py, rebuild_analysis.py (shell wrappers: setup-tools.sh, rebuild-analysis.sh)
 ```
 
 ## Gates (do not skip, do not reorder)

@@ -4,21 +4,22 @@ import os
 import shutil
 import stat
 import subprocess
+import sys
 import tempfile
 import unittest
 import zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-SCRIPT = os.path.join(ROOT, "tools", "rebuild-analysis.sh")
-HAVE = all(shutil.which(x) for x in ("bash", "unzip", "sha256sum"))
+SCRIPT = os.path.join(ROOT, "tools", "rebuild_analysis.py")
+HAVE = True
+PY = sys.executable
 
 
 def sha(b):
     return hashlib.sha256(b).hexdigest()
 
 
-@unittest.skipUnless(HAVE, "needs bash, unzip and sha256sum")
 class Rebuild(unittest.TestCase):
     def setUp(self):
         self.d = tempfile.mkdtemp()
@@ -46,12 +47,14 @@ class Rebuild(unittest.TestCase):
         return x
 
     def tools(self, version="1.5.6", rc=0):
+        if sys.platform == "win32":
+            self.skipTest("fake jadx/java are shell scripts")
         b = os.path.join(self.d, "bin")
         os.makedirs(b, exist_ok=True)
         open(os.path.join(b, "jadx"), "w").write(
             '#!/bin/sh\nif [ "$1" = "--version" ]; then echo %s; exit 0; fi\n'
             'while [ $# -gt 0 ]; do [ "$1" = "-d" ] && mkdir -p "$2/sources"; shift; done\n'
-            'echo ran >> "%s/calls"\nexit %d\n' % (version, self.d, rc))
+            'echo "ran $JAVA_OPTS" >> "%s/calls"\nexit %d\n' % (version, self.d, rc))
         open(os.path.join(b, "java"), "w").write("#!/bin/sh\necho 'openjdk version \"17.0.1\" 2024-01-01' >&2\n")
         for f in os.listdir(b):
             os.chmod(os.path.join(b, f), os.stat(os.path.join(b, f)).st_mode | stat.S_IEXEC)
@@ -63,7 +66,7 @@ class Rebuild(unittest.TestCase):
             env["PATH"] = path + os.pathsep + env["PATH"]
         if plain:
             env["PATH"] = "/usr/bin:/bin"
-        return subprocess.run(["bash", SCRIPT, "--root", self.d, *args], capture_output=True, text=True, env=env)
+        return subprocess.run([PY, SCRIPT, "--root", self.d, *args], capture_output=True, text=True, env=env)
 
     def calls(self):
         p = os.path.join(self.d, "calls")
@@ -71,13 +74,13 @@ class Rebuild(unittest.TestCase):
 
     # arguments and sources -----------------------------------------------------------------------------------
     def test_help_and_bad_arguments(self):
-        r = subprocess.run(["bash", SCRIPT, "--help"], capture_output=True, text=True)
+        r = subprocess.run([PY, SCRIPT, "--help"], capture_output=True, text=True)
         self.assertEqual(r.returncode, 0)
         for w in ("--accept-new-hash", "--dry-run", "--recover", "SOURCES"):
             self.assertIn(w, r.stdout)
         for args, msg in ((["--bogus"], "unknown option"), ([], "target name required"), (["a", "b"], "only one target"),
                           (["--local-file"], "needs a value"), (["Bad_Name"], "lowercase")):
-            r = subprocess.run(["bash", SCRIPT, *args], capture_output=True, text=True)
+            r = subprocess.run([PY, SCRIPT, *args], capture_output=True, text=True)
             self.assertEqual(r.returncode, 2, args)
             self.assertIn(msg, r.stderr)
 
@@ -209,6 +212,32 @@ class Rebuild(unittest.TestCase):
         self.assertIn("no URL", r.stderr)
         self.assertEqual(self.run_("demo", "--local-file", x, path=self.tools()).returncode, 0)
         self.assertEqual(self.run_("demo", path=self.tools()).returncode, 0)     # artifact now present, no URL needed
+
+    def test_heap_option_and_validation(self):
+        x = self.sources()
+        r = self.run_("demo", "--local-file", x, "--max-heap", "2g", path=self.tools())
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("-Xmx2g", open(os.path.join(self.d, "calls")).read())
+        r = self.run_("demo", "--local-file", x, "--max-heap", "lots", "--force", path=self.tools())
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("heap must look like", r.stderr)
+
+    def test_heap_from_sources_and_killed_jadx_hint(self):
+        x = self.sources(JADX_HEAP="1g")
+        r = self.run_("demo", "--local-file", x, path=self.tools(rc=137))
+        self.assertEqual(r.returncode, 5)
+        self.assertIn("-Xmx1g", open(os.path.join(self.d, "calls")).read())
+        self.assertIn("out of memory", r.stderr)
+
+    def test_url_override_downloads_and_verifies(self):
+        x = self.sources(URL="http://127.0.0.1:9/never")
+        moved = x + ".src"
+        shutil.copyfile(x, moved)
+        os.remove(x)
+        url = ("file:///" + moved.replace(os.sep, "/").lstrip("/"))
+        r = self.run_("demo", "--url", url, path=self.tools())
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue(os.path.isfile(os.path.join(self.t, "artifacts", "fake.xapk")))
 
     def test_recover_needs_a_class(self):
         x = self.sources()

@@ -78,7 +78,7 @@ def cmd_doctor(a):
             print("%-8s absent (python module, optional)" % mod)
     if missing_required:
         return 1
-    print("run tools/setup-tools.sh to install jdk, jadx, apktool without sudo")
+    print("run python tools/setup_tools.py to install jdk, jadx, apktool without admin rights")
     return 0
 
 
