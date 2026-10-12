@@ -31,6 +31,9 @@ Pass criteria: `targets/<slug>/` has SOURCES.md with hashes, a PROTOCOL.md where
 | `.claude/skills/re-native-emulation` | `.so` recovery with capstone and unicorn |
 | `.claude/skills/re-client-sim` | Layered client, simulator, dry-run, safe-write, fixtures, CI |
 | `.claude/skills/re-hardware-recon` | First contact with a real device, write budget, task packs for weaker agents, gated teardown |
+| `.claude/skills/re-jieli`, `re-ble-android-patterns`, `re-capture-ingestion` | Jieli family, finding transports in decompiled Android code, HCI snoop and pcap ingestion (generic skills contributed from reWatch) |
+| `knowledge/` | Sanitized notes for the next project (budget wearables landscape) |
+| `docs/NEXT-PASS-PROMPT.md` | Prompt for an agent pass over reBeamBox, reWork and reWatch |
 | `templates/` | TARGET, SOURCES, FACTS, PROTOCOL, LOG, HANDOFF |
 | `tools/rw.py` | `init`, `doctor`, `hash`, `recon`, `lint` (stdlib only) |
 | `tools/btcap.py` | btsnoop/pcap/pcapng to ATT write/notify table by UUID |

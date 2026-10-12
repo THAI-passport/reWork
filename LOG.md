@@ -43,3 +43,8 @@ Problems hit while building reWork's own tools (target problems go in `targets/<
 - Problem: a new agent's default was to download and decompile, which repeats work, and results of a pass were not recorded where the next agent looks.
 - Cause: no rule said when a rebuild is justified or what to record afterwards.
 - Solution: AGENTS.md "Rebuild only when necessary" and "After every decompile pass" (PROTOCOL, FACTS, LOG, matching skill = reWork's SOP), repeated in the re-static, re-acquire and re-workflow skills; QUICKSTART in the task-pack template; a test that scripts named in docs exist. Status: Solved as process.
+
+## 2026-10-12, generic skills and knowledge were stranded in the watch fork
+- Problem: three skills written in reWatch (Jieli family, finding transports in decompiled Android code, HCI capture ingestion) and a budget-wearables note are device-class generic but lived only in the fork.
+- Cause: the fork was seeded before reWork collected them.
+- Solution: copied `re-jieli`, `re-ble-android-patterns`, `re-capture-ingestion` into reWork, added `knowledge/` with the wearables note (labelled `[W]`), and a next-pass prompt in `docs/`. Status: Solved; the skills still cite one worked example by name and should be reviewed for further genericising.

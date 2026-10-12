@@ -66,7 +66,7 @@ async def main_async(a):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("address", help="Bluetooth address (macOS: the UUID that `rebeambox scan` prints)")
+    ap.add_argument("address", help="Bluetooth address (macOS: the UUID the scan command prints)")
     ap.add_argument("--seconds", type=float, default=60.0)
     ap.add_argument("--json", help="also write one JSON object per event to this file")
     a = ap.parse_args(argv)
