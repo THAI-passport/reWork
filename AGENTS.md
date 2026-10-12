@@ -24,12 +24,14 @@ Conflicting values live only in `targets/<slug>/FACTS.md`; other docs link there
 
 ## Logs you maintain
 - Problem log: `targets/<slug>/LOG.md` records every problem hit, with the evidence, the cause, and the fix, or "open" plus what is needed. Read it before resuming a target. Append the moment something goes wrong, in the same commit as the related change when practical.
+- Tooling log: `LOG.md` at the repo root records problems in reWork's own tools, same format.
 - Fixes list: `FIXES.md` at the repo root has "Open" and "Fixed". Anything you find that needs fixing (a tool bug, a template gap, a skill that misled you) goes under Open; when fixed, move it to Fixed with what was wrong and what changed. Same commit as the change.
 - When a log entry repeats across targets, promote it into the matching skill and delete the repetition.
 
 ## Platform support
-- Supported for now: Linux (Debian/Ubuntu, including headless containers) and macOS. Others are paused: do not test on them or maintain their guides, but keep code portable (`os.path`, no shell-only syntax in Python tools).
-- When you add a dependency, script, or setup step, update `README.md` and `tools/setup-tools.sh`.
+- Priority platforms: Linux (Debian/Ubuntu, including headless containers) and macOS. Windows is supported on a best-effort basis: the Python tools (`rw.py`, `rebuild_analysis.py`, `setup_tools.py`, `btcap.py`, `crcfind.py`) must run natively there; only `recover-failed-methods.sh` needs bash (Git Bash or WSL). Linux and macOS get tested; Windows is checked in CI only.
+- Write tools in Python 3 standard library, not bash, so one implementation serves all three. Shell files are thin wrappers. Use `os.path`/`pathlib`, `shutil.which`, no `sha256sum`/`declare -A`/GNU-only flags.
+- When you add a dependency, script, or setup step, update `README.md` and `tools/setup_tools.py`.
 - If the platform lacks something the work needs (no Bluetooth adapter, no display, no root, no network to a mirror), tell the user which platform, what is missing, and the options you see. Do not silently skip it or work around a design rule. Record it under Open in `FIXES.md`.
 - Say which platforms you actually ran a change on and which are untested.
 
@@ -50,8 +52,15 @@ Real systems means a physical device, a vendor server, a store listing, or any l
 - Work in phases: a coherent chunk that passes its own checks (tests, `python tools/rw.py lint`). Commit after every finished phase; push after every gate. Message format: `<slug> G<n>: <what the phase delivers>` plus a short body.
 - Never push to `main` directly. Use the designated work branch and offer a pull request when a gate set is done; do not open one unasked.
 - Capture-independent work (pure codecs, state machines, simulators, tests) may be built before hardware or captures exist. Capture-dependent work (timings, real limits, vendor quirks) waits for real data. Mark built-ahead work as such; no claim becomes `[H]` without hardware evidence.
+- Artifacts are rebuildable: record URL, SHA-256 and version in the machine-readable block of `SOURCES.md`, and on another machine run `python tools/rebuild_analysis.py <slug>` (try `--dry-run` first; `bash tools/rebuild-analysis.sh` is a wrapper). If the host is not reachable from a cloud session, add it to the environment's allowed domains or give the file with `--local-file`; use `--max-heap 3g` on small machines. It refuses to continue on a hash mismatch; `--accept-new-hash` only prints the new hash and edits nothing, and needs the user told. If the artifact cannot be rebuilt, say so and ask for the file.
+- Pin and verify by SHA-256, never by a floating "latest" link. Once an artifact is downloaded and validated, record its exact version, its SHA-256 and a versioned or mirrored URL in SOURCES (`VERSION`, `SHA256`, `URL`/`URL2`), and keep an owner-controlled exact copy; note its path or location in `COPY_LOCATION` without secrets. A rebuild always verifies against the pinned hash and refuses on a mismatch. When the vendor ships a new release, add a NEW pinned entry (new version, new hash, new SOURCES); never edit the old hash and never use `--accept-new-hash` silently (it is for inspection, prints the new hash, and the user must be told).
+- Rebuild only when necessary. A rebuild on a new instance costs a download and a decompiler run and returns nothing the target docs do not already hold unless you have a specific question. In this order: (1) grep the target's `PROTOCOL.md`, `FACTS.md`, `LOG.md` and the matching skill for the answer; (2) check whether `targets/<slug>/decompiled` exists and `BUILD-INFO.txt` matches SOURCES.md; (3) rebuild only if a claim tagged `[I]`/`[U]` needs the code, a different artifact version must be analysed, or the docs contradict each other; (4) `--dry-run` first; (5) write down which question required the rebuild. Never decompile "to explore".
+- After every decompile or code-reading pass, before you stop and in the same commit: byte-level findings go to `targets/<slug>/PROTOCOL.md` (tag, source class and method, no code pasted); disputed values to `FACTS.md`; every problem with its cause and solution (or "Unsolved" plus what was tried) to the target's `LOG.md`; procedure, tool flags, dead ends and tricks that would help on the next target go into the matching skill under `.claude/skills/` (that is reWork's SOP; if a trick applies to any target, promote it there and delete the repetition). A pass that ends with nothing recorded has to be repeated.
 - Stop and ask when a step needs the user: logins, installs needing root, payments, providing hardware, or approving a write to a real device.
 - Never commit `.env`, tokens, signed URLs, personal data (addresses, phone numbers, account ids, device serials, MAC addresses), or captures that contain them. Scrub before saving; mask addresses by default.
+
+## Writing for weaker agents
+Anything you hand off (task packs, run sheets, handoff notes) must work for an agent that has not seen this conversation: exact commands, expected outputs, decision tables, stop conditions, and pre-made assumptions so it never has to ask. Say which tasks need a human (hardware, approvals) and which an AI can finish alone; an AI must never fabricate hardware results.
 
 ## Workspace layout
 ```
@@ -62,11 +71,12 @@ targets/<slug>/      one directory per target, created by `python tools/rw.py in
   PROTOCOL.md        byte-exact spec with tags and worked examples
   LOG.md             dated problem log, newest at the bottom
   HANDOFF.md         final report: what is done, what is unverified, next hardware steps
+  tasks/             recon task pack: README, SW-RECON, HW-RECON, ASSUMPTIONS, STATUS, results/
   artifacts/ work/   git-ignored
 client/<slug>/       original client code, simulator, tests (created at gate 4)
 FIXES.md             open and fixed issues in this repo itself
 templates/           copied by init
-tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.py, setup-tools.sh
+tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.py, notify_log.py, make_test_media.py, setup_tools.py, rebuild_analysis.py (shell wrappers: setup-tools.sh, rebuild-analysis.sh)
 ```
 
 ## Gates (do not skip, do not reorder)
@@ -77,7 +87,7 @@ tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.
 | G2 Surface map | transports, UUIDs/ports, entry points, stored keys listed with tags | re-static |
 | G3 Spec | PROTOCOL.md with framing, checksums, auth, state machine, worked vectors | re-protocol-spec, re-native-emulation |
 | G4 Client | layered client + simulator + dry-run, tests green, repo lint green | re-client-sim |
-| G5 Handoff | HANDOFF.md, hardware test plan, LOG.md complete | re-workflow |
+| G5 Handoff | HANDOFF.md, recon task pack specialised (`tasks/`), LOG.md complete | re-workflow, re-hardware-recon |
 
 Work gate by gate without waiting for approval between gates. Commit and push at each gate. Update `TARGET.md` gate table as you go.
 

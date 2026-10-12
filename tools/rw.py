@@ -35,11 +35,18 @@ def cmd_init(a, root=ROOT):
             "date": datetime.date.today().isoformat()}
     os.makedirs(dest)
     tdir = os.path.join(root, "templates")
-    for fn in sorted(os.listdir(tdir)):
-        text = open(os.path.join(tdir, fn), encoding="utf-8").read()
-        for k, v in subs.items():
-            text = text.replace("{{%s}}" % k, v)
-        open(os.path.join(dest, fn), "w", encoding="utf-8").write(text)
+    for dp, dn, fns in os.walk(tdir):                  # templates/ and templates/tasks/ (the recon task pack)
+        dn.sort()
+        out_dir = os.path.join(dest, os.path.relpath(dp, tdir))
+        os.makedirs(out_dir, exist_ok=True)
+        for fn in sorted(fns):
+            with open(os.path.join(dp, fn), encoding="utf-8") as f:
+                text = f.read()
+            for k, v in subs.items():
+                text = text.replace("{{%s}}" % k, v)
+            with open(os.path.join(out_dir, fn), "w", encoding="utf-8") as f:
+                f.write(text)
+    os.makedirs(os.path.join(dest, "tasks", "results"), exist_ok=True)
     for d in ("artifacts", "work", "decompiled"):
         os.makedirs(os.path.join(dest, d))
     print("created targets/%s (artifacts/, work/, decompiled/ are git-ignored)" % a.slug)
@@ -78,7 +85,7 @@ def cmd_doctor(a):
             print("%-8s absent (python module, optional)" % mod)
     if missing_required:
         return 1
-    print("run tools/setup-tools.sh to install jdk, jadx, apktool without sudo")
+    print("run python tools/setup_tools.py to install jdk, jadx, apktool without admin rights")
     return 0
 
 

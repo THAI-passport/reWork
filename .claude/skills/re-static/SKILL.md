@@ -5,7 +5,7 @@ description: Static analysis of an Android (and by analogy iOS or desktop) compa
 
 # re-static (gate G2)
 
-Setup: `bash tools/setup-tools.sh` (user-space JDK, jadx, apktool; no sudo). Then `python tools/rw.py doctor`.
+Setup: `python tools/setup_tools.py` (user-space JDK, jadx, apktool; no admin rights; Linux, macOS, Windows). Then `python tools/rw.py doctor`.
 
 ## Decompile
 ```
@@ -14,6 +14,9 @@ nohup bash -c 'jadx -j 4 -d targets/<slug>/decompiled targets/<slug>/work/<packa
 apktool d -s -f --no-res -o targets/<slug>/work/smali targets/<slug>/work/<package>.apk
 ```
 jadx exit 3 only means some methods failed. Read the log with `tr '\r' '\n'`. Code may be R8-obfuscated (single-letter packages); vendor packages and string constants usually survive.
+
+## Decompile only when needed, and always record
+Before decompiling, grep the target's PROTOCOL.md, FACTS.md and LOG.md for the answer, and check whether `targets/<slug>/decompiled` already exists (BUILD-INFO.txt). Decompile only for a specific `[I]`/`[U]` claim, a new version, or a contradiction, and write down which. After the pass, in the same commit: findings -> PROTOCOL.md (tag, class.method), disputed values -> FACTS.md, problems and solutions -> LOG.md, reusable procedure -> this skill.
 
 ## Fast survey
 `python tools/rw.py recon targets/<slug>/decompiled --slug <slug>` greps a recipe pack (GATT API, UUID literals, sockets, URLs, IPs and ports, crypto, native libs, stored-key APIs, byte-array literals) and writes `targets/<slug>/work/recon.md`, separating app code from bundled libraries. Treat it as a map, not as findings.

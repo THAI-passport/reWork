@@ -30,16 +30,24 @@ Pass criteria: `targets/<slug>/` has SOURCES.md with hashes, a PROTOCOL.md where
 | `.claude/skills/re-protocol-spec` | Byte-exact spec, checksums, SDK command layers, captures |
 | `.claude/skills/re-native-emulation` | `.so` recovery with capstone and unicorn |
 | `.claude/skills/re-client-sim` | Layered client, simulator, dry-run, safe-write, fixtures, CI |
+| `.claude/skills/re-hardware-recon` | First contact with a real device, write budget, task packs for weaker agents, gated teardown |
+| `.claude/skills/re-jieli`, `re-ble-android-patterns`, `re-capture-ingestion` | Jieli family, finding transports in decompiled Android code, HCI snoop and pcap ingestion (generic skills contributed from reWatch) |
+| `knowledge/` | Sanitized notes for the next project (budget wearables landscape) |
+| `docs/NEXT-PASS-PROMPT.md` | Prompt for an agent pass over reBeamBox, reWork and reWatch |
 | `templates/` | TARGET, SOURCES, FACTS, PROTOCOL, LOG, HANDOFF |
 | `tools/rw.py` | `init`, `doctor`, `hash`, `recon`, `lint` (stdlib only) |
 | `tools/btcap.py` | btsnoop/pcap/pcapng to ATT write/notify table by UUID |
 | `tools/crcfind.py` | Identify a CRC from sample frames |
-| `tools/setup-tools.sh` | User-space JDK, jadx, apktool, venv (no sudo) |
+| `tools/notify_log.py` | Passive BLE notification logger (touch/event discovery) |
+| `tools/make_test_media.py` | Synthetic test images, GIF and clips for display devices |
+| `templates/tasks/` | Recon task pack copied into every target by `init` |
+| `tools/setup_tools.py` | User-space JDK, jadx, apktool, venv (no admin rights); Linux, macOS, Windows. `setup-tools.sh` wraps it |
 | `tools/recover-failed-methods.sh` | Second-chance decompile via simple mode and CFR |
+| `tools/rebuild_analysis.py` | Rebuild a target's artifacts and jadx tree from SOURCES: hash-verified, idempotent, `--dry-run`, `--max-heap`, `--url`; Linux, macOS, Windows. `rebuild-analysis.sh` wraps it |
 
 ## Manual quick start
 ```
-bash tools/setup-tools.sh           # once, optional --emulation
+python tools/setup_tools.py        # once; optional --emulation (Windows: run it from PowerShell)
 python tools/rw.py doctor
 python tools/rw.py init t900 --name "T900 watch" --goal "sync status from CLI"
 python tools/rw.py hash targets/t900/artifacts/app.xapk --slug t900
