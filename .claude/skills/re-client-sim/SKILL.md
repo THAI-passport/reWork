@@ -19,6 +19,12 @@ Location: `client/<slug>/` with its own `pyproject.toml` (core deps minimal, `[t
 ## Safe-write guard (before any repeated-send feature)
 Per-device state file keyed by a hash of the address: write counter, last payload hash (skip identical), minimum interval, hard daily cap, warnings; count only after success; dry runs never count.
 
+## Make hardware tests possible
+- Log every status or telemetry message the device pushes (free space, size, mode) with a stable prefix, and keep them in a list on the session object. Free-space and mode tests read these numbers.
+- Offer a no-delta option so a deliberate identical rewrite is possible without turning the whole guard off.
+- Provide a passive logger (`tools/notify_log.py`) and a test-media generator (`tools/make_test_media.py`) so first contact needs no ad hoc scripts.
+- Every flag mentioned in a recon task must exist; verify with `--help` or a dry run when writing the pack.
+
 ## Fixtures, lint, CI
 - Generate small synthetic captures with the same builders, commit with a manifest that says SYNTHETIC and a `--check` mode so drift fails CI. Include one deliberately malformed capture; the tools must report it, not crash.
 - Test that the client package contains no vendor URLs, analytics hosts, or network modules beyond the declared transport (`test_no_vendor_calls`).

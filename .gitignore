@@ -19,3 +19,5 @@ __pycache__/
 reports/*
 !reports/README.md
 targets/*/BUILD-INFO.txt
+testmedia/
+dumps/

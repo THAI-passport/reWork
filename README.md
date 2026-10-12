@@ -30,10 +30,14 @@ Pass criteria: `targets/<slug>/` has SOURCES.md with hashes, a PROTOCOL.md where
 | `.claude/skills/re-protocol-spec` | Byte-exact spec, checksums, SDK command layers, captures |
 | `.claude/skills/re-native-emulation` | `.so` recovery with capstone and unicorn |
 | `.claude/skills/re-client-sim` | Layered client, simulator, dry-run, safe-write, fixtures, CI |
+| `.claude/skills/re-hardware-recon` | First contact with a real device, write budget, task packs for weaker agents, gated teardown |
 | `templates/` | TARGET, SOURCES, FACTS, PROTOCOL, LOG, HANDOFF |
 | `tools/rw.py` | `init`, `doctor`, `hash`, `recon`, `lint` (stdlib only) |
 | `tools/btcap.py` | btsnoop/pcap/pcapng to ATT write/notify table by UUID |
 | `tools/crcfind.py` | Identify a CRC from sample frames |
+| `tools/notify_log.py` | Passive BLE notification logger (touch/event discovery) |
+| `tools/make_test_media.py` | Synthetic test images, GIF and clips for display devices |
+| `templates/tasks/` | Recon task pack copied into every target by `init` |
 | `tools/setup_tools.py` | User-space JDK, jadx, apktool, venv (no admin rights); Linux, macOS, Windows. `setup-tools.sh` wraps it |
 | `tools/recover-failed-methods.sh` | Second-chance decompile via simple mode and CFR |
 | `tools/rebuild_analysis.py` | Rebuild a target's artifacts and jadx tree from SOURCES: hash-verified, idempotent, `--dry-run`, `--max-heap`, `--url`; Linux, macOS, Windows. `rebuild-analysis.sh` wraps it |

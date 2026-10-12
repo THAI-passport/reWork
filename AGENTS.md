@@ -56,6 +56,9 @@ Real systems means a physical device, a vendor server, a store listing, or any l
 - Stop and ask when a step needs the user: logins, installs needing root, payments, providing hardware, or approving a write to a real device.
 - Never commit `.env`, tokens, signed URLs, personal data (addresses, phone numbers, account ids, device serials, MAC addresses), or captures that contain them. Scrub before saving; mask addresses by default.
 
+## Writing for weaker agents
+Anything you hand off (task packs, run sheets, handoff notes) must work for an agent that has not seen this conversation: exact commands, expected outputs, decision tables, stop conditions, and pre-made assumptions so it never has to ask. Say which tasks need a human (hardware, approvals) and which an AI can finish alone; an AI must never fabricate hardware results.
+
 ## Workspace layout
 ```
 targets/<slug>/      one directory per target, created by `python tools/rw.py init <slug>`
@@ -65,11 +68,12 @@ targets/<slug>/      one directory per target, created by `python tools/rw.py in
   PROTOCOL.md        byte-exact spec with tags and worked examples
   LOG.md             dated problem log, newest at the bottom
   HANDOFF.md         final report: what is done, what is unverified, next hardware steps
+  tasks/             recon task pack: README, SW-RECON, HW-RECON, ASSUMPTIONS, STATUS, results/
   artifacts/ work/   git-ignored
 client/<slug>/       original client code, simulator, tests (created at gate 4)
 FIXES.md             open and fixed issues in this repo itself
 templates/           copied by init
-tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.py, setup_tools.py, rebuild_analysis.py (shell wrappers: setup-tools.sh, rebuild-analysis.sh)
+tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.py, notify_log.py, make_test_media.py, setup_tools.py, rebuild_analysis.py (shell wrappers: setup-tools.sh, rebuild-analysis.sh)
 ```
 
 ## Gates (do not skip, do not reorder)
@@ -80,7 +84,7 @@ tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.
 | G2 Surface map | transports, UUIDs/ports, entry points, stored keys listed with tags | re-static |
 | G3 Spec | PROTOCOL.md with framing, checksums, auth, state machine, worked vectors | re-protocol-spec, re-native-emulation |
 | G4 Client | layered client + simulator + dry-run, tests green, repo lint green | re-client-sim |
-| G5 Handoff | HANDOFF.md, hardware test plan, LOG.md complete | re-workflow |
+| G5 Handoff | HANDOFF.md, recon task pack specialised (`tasks/`), LOG.md complete | re-workflow, re-hardware-recon |
 
 Work gate by gate without waiting for approval between gates. Commit and push at each gate. Update `TARGET.md` gate table as you go.
 

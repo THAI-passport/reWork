@@ -28,3 +28,8 @@ Problems hit while building reWork's own tools (target problems go in `targets/<
 - Problem: from a cloud container, `d.apkpure.com` and `api.adoptium.net` are unreachable and github release URLs return 403, so a rebuild stops at the download.
 - Cause: the environment network policy allows package managers and a short list of hosts.
 - Solution: add the hosts under Allowed domains in the environment settings, or pass `--local-file`. Documented in AGENTS.md. Status: needs the user.
+
+## 2026-10-12, hardware recon steps could not be run as written
+- Problem: the first hardware checklist (in the reBeamBox project) contradicted its own safety tooling: an identical-rewrite test is skipped by the delta guard, the minimum interval and daily cap were not budgeted, the free-space number was never printed, and nothing said which steps a cloud agent can actually do.
+- Cause: the checklist predated the guard and the first-contact tooling, and mixed background with procedure.
+- Solution: generic task pack in `templates/tasks/`, a `re-hardware-recon` skill, a write-budget step, a no-delta option requirement, status-message logging requirement. Status: Solved in templates; untested on a real target.

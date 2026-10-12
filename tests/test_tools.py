@@ -39,6 +39,10 @@ class InitHashLint(unittest.TestCase):
         self.assertIn("sync steps", text)
         self.assertNotIn("{{", text)
         self.assertTrue(os.path.isdir(os.path.join(d, "targets", "t900", "artifacts")))
+        for f in ("README.md", "SW-RECON.md", "HW-RECON.md", "ASSUMPTIONS.md", "STATUS.md"):
+            self.assertTrue(os.path.isfile(os.path.join(d, "targets", "t900", "tasks", f)), f)
+        self.assertTrue(os.path.isdir(os.path.join(d, "targets", "t900", "tasks", "results")))
+        self.assertIn("T900 watch", open(os.path.join(d, "targets", "t900", "tasks", "README.md")).read())
         self.assertEqual(rw.cmd_init(a, root=d), 1)
 
     def test_bad_slug_rejected(self):
