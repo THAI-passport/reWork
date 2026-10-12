@@ -1,7 +1,7 @@
 # Handoff: {{name}}
 
 ## What exists
-- Docs: TARGET, SOURCES, FACTS, PROTOCOL, LOG
+- Docs: TARGET, SOURCES, FACTS, PROTOCOL, LOG; repo `docs/steps.md` up to date
 - Client: client/{{slug}}/ (commands, profiles, simulator)
 - Tests: how to run, what is skipped and why
 
