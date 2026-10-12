@@ -34,5 +34,8 @@ Per-device state file keyed by a hash of the address: write counter, last payloa
 ## First-contact tooling
 `probe --qualify` writes a report shaped like the hardware test template (masked addresses, git-ignored). Provide a hardware checklist: order of operations, what to capture, what a failure looks like, stop conditions.
 
+## Simulator assumptions
+Any simulator literal that stands for a device value (free space, sizes, timings, reply strings) is a named constant with an "assumption" comment pointing at an assumption register (behaviour, location, backing tag, hardware task that tests it). Write the register before first contact.
+
 ## Done when
 `pytest -q` is green with no hardware, dry-run output is inspectable, and HANDOFF.md lists which assumptions only hardware can verify.

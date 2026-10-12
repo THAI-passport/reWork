@@ -14,7 +14,7 @@ The agent reads `AGENTS.md`, loads the `re-workflow` skill, and runs gates G0 to
 
 ### Benchmark prompt (forked repo)
 ```
-Reverse engineer: the T900 and C900 watch app.   Goal: scan, connect, read basic status and push a watch face or notification from a Python CLI.
+Reverse engineer: <device or app name>.   Goal: scan, connect, read basic status and push one command from a Python CLI.
 ```
 Pass criteria: `targets/<slug>/` has SOURCES.md with hashes, a PROTOCOL.md where every row is tagged, a FACTS.md for disputed values, `client/<slug>/` with `pytest -q` green and `--dry-run`, `python tools/rw.py lint` green, no vendor artifact tracked, HANDOFF.md listing hardware unknowns. Whether both models share one app or protocol is a finding to record, not an assumption.
 
@@ -49,9 +49,9 @@ Pass criteria: `targets/<slug>/` has SOURCES.md with hashes, a PROTOCOL.md where
 ```
 python tools/setup_tools.py        # once; optional --emulation (Windows: run it from PowerShell)
 python tools/rw.py doctor
-python tools/rw.py init t900 --name "T900 watch" --goal "sync status from CLI"
-python tools/rw.py hash targets/t900/artifacts/app.xapk --slug t900
-python tools/rw.py recon targets/t900/decompiled --slug t900
+python tools/rw.py init mydev --name "My device" --goal "sync status from CLI"
+python tools/rw.py hash targets/mydev/artifacts/app.xapk --slug mydev
+python tools/rw.py recon targets/mydev/decompiled --slug mydev
 python tools/rw.py lint
 python -m unittest discover -s tests
 ```

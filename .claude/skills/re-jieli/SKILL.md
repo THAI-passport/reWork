@@ -5,7 +5,7 @@ description: Jieli (JL) Bluetooth SoC family (BR28 / AC701N, AC69xx and relative
 
 # re-jieli
 
-All concrete values below come from one worked example (a round e-badge, repo THAI-passport/reBeamBox). Tags: [C] confirmed there in app code, [V] verified by emulation there, [W] third-party report, [U] unknown. They are a starting hypothesis for a watch: check each against the app you are analysing before relying on it.
+All concrete values below come from one worked example (a Jieli-based BLE display device; see knowledge/ for example projects). Tags: [C] confirmed there in app code, [V] verified by emulation there, [W] third-party report, [U] unknown. They are a starting hypothesis for a new device: check each against the app you are analysing before relying on it.
 
 ## Recognise it in an app
 - Native libraries named `libjl_*` (examples: `libjl_auth.so`, `libjl_crc.so`, `libjl_fatfs.so`) in the arm64 split. List them with `unzip -l` on the ABI split. [C]
@@ -32,7 +32,7 @@ Device-pulled: CRC-16/XMODEM of the whole file, `NotifyPrepareEnv` (opcode 0x21)
 `libjl_fatfs` is a FAT implementation; a 16 MiB NOR flash with a FAT16 gallery is reported for one product [W]. Native libraries often hold no limits at all; that negative result is worth recording [C]. The SDK defines storage-management commands (browse, delete by name, format, read file). Treat delete and format as destructive: record their ids, never send them [U for payloads].
 
 ## OTA: read-only awareness
-`jl_bt_ota` implements firmware upgrade over the same transport. Study the flow to know what a watch accepts, and to know what to avoid. Never send OTA data to a real device; a bad image bricks it. Record only which service, characteristics and commands are involved.
+`jl_bt_ota` implements firmware upgrade over the same transport. Study the flow to know what the device accepts, and to know what to avoid. Never send OTA data to a real device; a bad image bricks it. Record only which service, characteristics and commands are involved.
 
 ## Emulating the native routine (unicorn) [V]
 1. Disassemble the exports and JNI natives with capstone and pyelftools first; find which function does the work.

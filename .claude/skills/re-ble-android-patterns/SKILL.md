@@ -8,7 +8,7 @@ description: How to find and read the transport code of an Android companion app
 Run the searches on the jadx tree (`targets/<slug>/decompiled`). Obfuscated class names do not matter; framework calls and string constants do. Tag results [C] with class and method. Worked values from reBeamBox are examples only.
 
 ## Start from the action, then grep
-Start at the UI action (connect, send, apply watch face), follow it to the sender, then use the searches below to confirm and to find siblings.
+Start at the UI action (connect, send, upload media), follow it to the sender, then use the searches below to confirm and to find siblings.
 
 | Question | Search (ripgrep, fixed strings first) |
 |---|---|
