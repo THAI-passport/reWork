@@ -1,6 +1,6 @@
 ---
 name: re-jieli
-description: Jieli (JL) Bluetooth SoC family (BR28 / AC701N, AC69xx and relatives) as seen from a companion app - how to recognise it, the RCSP frame layout, the E1 over SAFER+ authentication handshake, large-file transfer, FatFS and gallery notes, OTA awareness (read-only), emulating the native auth library with unicorn and verifying a port against it, and the pitfalls. Load when an app ships libjl_* natives, uses service 0xAE00, or a capture shows FE DC BA frames.
+description: Jieli (JL) Bluetooth SoC family (BR28 / AC701N, AC69xx and relatives) as seen from a companion app - recognition, RCSP frame layout, the E1 over SAFER+ authentication handshake, large-file transfer, FatFS and gallery notes, OTA awareness (read-only), and Jieli-specific notes for emulating libjl_auth. Use whenever an app or device shows Jieli signs - libjl_* natives, com.jieli.* packages, GATT service 0xAE00, FE DC BA ... EF frames in a capture, or SAFER+ authentication.
 ---
 
 # re-jieli
@@ -32,14 +32,14 @@ Device-pulled: CRC-16/XMODEM of the whole file, `NotifyPrepareEnv` (opcode 0x21)
 `libjl_fatfs` is a FAT implementation; a 16 MiB NOR flash with a FAT16 gallery is reported for one product [W]. Native libraries often hold no limits at all; that negative result is worth recording [C]. The SDK defines storage-management commands (browse, delete by name, format, read file). Treat delete and format as destructive: record their ids, never send them [U for payloads].
 
 ## OTA: read-only awareness
-`jl_bt_ota` implements firmware upgrade over the same transport. Study the flow to know what the device accepts, and to know what to avoid. Never send OTA data to a real device; a bad image bricks it. Record only which service, characteristics and commands are involved.
+`jl_bt_ota` implements firmware upgrade over the same transport: the official OTA SDK docs put it on 0xAE00 itself, with the device pulling blocks (opcode 0xE5, seek and length) [W]. A service-UUID blocklist therefore does not stop Jieli OTA; the client must refuse the OTA opcodes. Study the flow to know what a watch accepts, and to know what to avoid. Never send OTA data to a real device; a bad image bricks it. Record only which service, characteristics and commands are involved.
 
-## Emulating the native routine (unicorn) [V]
-1. Disassemble the exports and JNI natives with capstone and pyelftools first; find which function does the work.
-2. Load the aarch64 `.so` into unicorn at a base address, apply relocations, hook the PLT stubs for malloc, free, rand, memcpy and similar; set up a stack.
-3. Pitfalls seen: return from a hooked PLT stub to `lr` (not `lr-4`, which re-executes the call); enable FP and SIMD (CPACR_EL1) or results come out as zeros; map TPIDR_EL0 for the stack canary.
-4. Port the algorithm to Python stage by stage and compare each stage against the emulated native code; do not compare only the final output. Keep the emulator-generated vectors as tests (50 random key, address and input triples were used) and skip the emulation test cleanly when unicorn is missing.
-5. Emulation proves your port equals the library, not that a device accepts it.
+## Emulating libjl_auth [V]
+Use `re-native-emulation` and its harness for the generic unicorn setup (CPACR_EL1, TPIDR_EL0, PLT hooks returning to LR). Jieli specifics:
+1. Find the E1 entry from the JNI natives of the auth class; the SAFER+ tables and the default key sit in `.rodata`/`.data`.
+2. The address input is a fixed 6 bytes; check how the app pads or orders it before calling.
+3. Port stage by stage (SAFER+ key schedule, rounds, E1 wrapper) and compare each stage with the emulated library, not only the final output. Keep emulator vectors as tests (50 random key, address and input triples were used) and skip cleanly when unicorn is missing.
+4. Emulation proves your port equals the library, not that a device accepts it.
 
 ## Pitfalls
 - jadx may merge branches in the bind and info decoders; where a layout looks odd read smali.

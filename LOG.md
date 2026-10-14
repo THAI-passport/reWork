@@ -53,3 +53,14 @@ Problems hit while building reWork's own tools (target problems go in `targets/<
 - Problem: a SOURCES file could pin a hash while its only URL was a floating "latest" link, and `--accept-new-hash` could be used to move on after a vendor update without a record, so the next machine would pin something else.
 - Cause: the rebuild tool only checked hashes; nothing asked for a versioned URL, an owner-controlled copy or a new entry per release.
 - Solution: AGENTS.md rule (pin by version and SHA-256, new release is a new pinned entry, never edit the old hash), `COPY_LOCATION` field and template text, warnings for a floating-only URL or a missing copy location, mismatch and accept messages that say so, tests.
+
+## 2026-10-14, skill review: overlaps, missing generic rules, missing tools
+- Problem: an external review of `.claude/skills/` found gate-only trigger text, the gate map and tag legend held only in AGENTS.md, generic unicorn rules buried in `re-jieli`, duplicated text between `re-static` and `re-ble-android-patterns`, and promised steps (scrub, flag check) with no tool behind them. Its proposed tag legend redefined `[W]` and `[V]` and added `[C-SDK]`, which would have contradicted AGENTS.md.
+- Cause: skills grew per target; generic lessons stayed where they were first learned.
+- Solution: see FIXES.md "Skill suite review". The legend stays as in AGENTS.md; SDK code is `[C]` with an "SDK:" note. First flag-check attempt only read fenced blocks and found nothing because the task packs put commands in inline code spans; it now reads both. Status: Solved.
+
+## 2026-10-14, port from reWatch PR #3
+- Problem: the PR #3 skill and tool upgrades existed only in reWatch. A first port attempt was built on the repo's default branch (an older Claude branch) instead of `main` and conflicted with main's own earlier partial port.
+- Cause: the default branch is not `main`; a shallow clone takes the default.
+- Solution: rebuilt on `origin/main` with a three-way merge per file (base: reWatch before PR #3; ours: reWork main; theirs: reWatch after PR #3), keeping reWork's generic wording; target-only content (the watch client, its frame tests, a vendor checksum rule) left out. A proposal also asked for privacy_scan.py, install_hooks.py, re-privacy-scrub, re-step-rationale, CLOUD-SETUP.md and docs/steps.md; none exist in any of the three repos, so none were invented. Status: Solved.
+

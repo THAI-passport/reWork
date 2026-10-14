@@ -1,6 +1,6 @@
 ---
 name: re-protocol-spec
-description: Turn a surface map into a byte-exact, evidence-tagged protocol specification with checksums, framing, auth, state machine, worked examples and test vectors; also reading vendor SDK command layers and analysing captures (btsnoop/pcap) when available.
+description: Turn a surface map into a byte-exact, evidence-tagged PROTOCOL.md - framing, checksums (identify unknown CRCs with tools/crcfind.py), commands, auth, session state machine, transfer containers, Protobuf and TLV schema recovery (protoc --decode_raw), worked byte examples and test vectors; also reading vendor SDK command layers. Use when the user asks to write or update PROTOCOL.md, identify a checksum, decode Protobuf/TLV payloads, tag protocol evidence or generate worked examples (gate G3).
 ---
 
 # re-protocol-spec (gate G3)
@@ -16,17 +16,26 @@ description: Turn a surface map into a byte-exact, evidence-tagged protocol spec
 8. Unknowns that need hardware, each with the test that would settle it.
 
 ## Rules
-- Tag each statement `[C] [V] [H] [W] [I] [U]`. Move disputed numbers into FACTS.md.
+- Tag each statement: `[C]` artifact (file, class.method), `[V]` emulator or test vector against real code, `[H]` hardware or capture, `[W]` third-party unverified, `[I]` inferred, `[U]` unknown (legend: AGENTS.md). Move disputed numbers into FACTS.md.
 - Quote constants from the full source line.
 - Generate examples with a small script that implements only the documented formulas (a small script in `client/<slug>/tools/`); paste output into the spec. If the script and the spec disagree, the spec is wrong or the script is.
 - Identify unknown CRCs with `python tools/crcfind.py --data <hex> --crc <hex>` or by checking the check value of `123456789` against a catalogue. A short function that matches a textbook table is textbook; compare tables before assuming custom crypto.
 - Write pure-function builders and parsers first; they become the client's core and the test oracle.
 
+## Protobuf and TLV
+Signs: `com.google.protobuf`, generated message classes (`parseFrom`, `toByteArray`, `newBuilder`), nanopb symbols (`pb_encode`, `pb_decode`) in natives, payloads starting `08 ..`, `0a len ..`, `12 len ..` (field key = number << 3 | wire type).
+1. Look for embedded descriptors first: `FileDescriptorProto` bytes or `.proto` names in dex strings and `.rodata`; generated Java classes carry field numbers as constants.
+2. Decode samples before naming fields: `printf '<hex>' | xxd -r -p | protoc --decode_raw` gives field numbers and wire types. Use built example payloads or capture payloads; strip any outer frame header and checksum first.
+3. Then name fields from the generated classes, field by field, and tag each `[C]` with the class.
+4. nanopb in a stripped `.so`: find `pb_decode`/`pb_encode` by error strings (`"wrong wire type"`, `"invalid varint"`) or the varint loop; the descriptor is the 2nd argument (x1). nanopb 0.4+ uses `pb_msgdesc_t` with packed `field_info`; older versions a `pb_field_t` array ending in a zero entry. Easiest: call the library's own `pb_field_iter_begin`/`pb_field_iter_next` under the `re-native-emulation` harness and read tag, type and sizes from the iterator [W: nanopb docs/reference.md].
+5. Plain TLV: write a table of tag, length width and endianness, value; test nesting on a real sample.
+Write the schema into PROTOCOL.md as a table, not as copied `.proto` text from the vendor.
+
 ## Reading a vendor SDK's command layer
 Order: frame packer/parser, command classes (opcode in super constructor, params `toData`/`parse`), response handlers (switch on opcode), the task that sequences them. Types in base classes decide "wants response". Bundled public SDKs often have public documentation; prefer it over re-deriving.
 
 ## Captures (only if the user provides them)
-`python tools/btcap.py capture.btsnoop` lists ATT writes and notifications by characteristic UUID from btsnoop, pcap or pcapng, with reassembly. Use it to confirm or overrule `[C]`/`[I]` claims; promote to `[H]` and record which capture file.
+See `re-capture-ingestion`. `python tools/btcap.py capture.btsnoop` lists ATT writes and notifications by characteristic UUID from btsnoop, pcap or pcapng, with reassembly. Use it to confirm or overrule `[C]`/`[I]` claims; promote to `[H]` and record which capture file.
 
 ## Multi-model families
 Put per-model differences in one table: transport, advertised name, picture size, limits, evidence. Keep the code path shared and the table as data.

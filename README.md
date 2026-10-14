@@ -28,15 +28,19 @@ Pass criteria: `targets/<slug>/` has SOURCES.md with hashes, a PROTOCOL.md where
 | `.claude/skills/re-acquire` | Hardware name to app, download, validate, hash |
 | `.claude/skills/re-static` | jadx/apktool survey, surface map, obfuscation, decompiler failures |
 | `.claude/skills/re-protocol-spec` | Byte-exact spec, checksums, SDK command layers, captures |
-| `.claude/skills/re-native-emulation` | `.so` recovery with capstone and unicorn |
-| `.claude/skills/re-client-sim` | Layered client, simulator, dry-run, safe-write, fixtures, CI |
+| `.claude/skills/re-native-emulation` | `.so` recovery with capstone and unicorn; aarch64 harness in `scripts/` (needs `setup_tools.py --emulation`) |
+| `.claude/skills/re-client-sim` | Layered client, simulator, dry-run, safe-write (reference code in `references/`), fixtures, CI |
+| `.claude/skills/re-watch-targets` | Watch specifics: stacks (signatures in `references/vendor-stacks.md`), white-label families, standard GATT services, features, watch face and OTA shapes, read-only safe probes, what to record per family |
+| `.claude/skills/re-ble-android-patterns` | Finding transports in decompiled Android code: GATT, MTU, write types, scan filters, name dispatch, catalogs, ACK patterns, Wi-Fi modes |
+| `.claude/skills/re-jieli` | Jieli chip family: recognition, RCSP frames, E1/SAFER+ auth, large-file transfer, FatFS, OTA awareness, emulation |
+| `.claude/skills/re-capture-ingestion` | HCI snoop and pcap workflow with `tools/btcap.py`, scrubbing with `tools/scrub_capture.py` |
 | `.claude/skills/re-hardware-recon` | First contact with a real device, write budget, task packs for weaker agents, gated teardown |
-| `.claude/skills/re-jieli`, `re-ble-android-patterns`, `re-capture-ingestion` | Jieli family, finding transports in decompiled Android code, HCI snoop and pcap ingestion (generic skills contributed from reWatch) |
 | `knowledge/` | Sanitized notes for the next project (budget wearables landscape) |
 | `docs/NEXT-PASS-PROMPT.md` | Prompt for an agent pass over reBeamBox, reWork and reWatch |
 | `templates/` | TARGET, SOURCES, FACTS, PROTOCOL, LOG, HANDOFF |
-| `tools/rw.py` | `init`, `doctor`, `hash`, `recon`, `lint` (stdlib only) |
+| `tools/rw.py` | `init`, `doctor`, `hash`, `recon`, `lint`, `taskflags` (stdlib only) |
 | `tools/btcap.py` | btsnoop/pcap/pcapng to ATT write/notify table by UUID |
+| `tools/scrub_capture.py` | Mask addresses, tokens and named literals in a btcap summary, length-preserving |
 | `tools/crcfind.py` | Identify a CRC from sample frames |
 | `tools/notify_log.py` | Passive BLE notification logger (touch/event discovery) |
 | `tools/make_test_media.py` | Synthetic test images, GIF and clips for display devices |

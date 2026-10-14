@@ -1,6 +1,6 @@
 ---
 name: re-capture-ingestion
-description: Turn a Bluetooth HCI snoop log or pcap/pcapng file into protocol evidence - how the owner captures it from a phone, how to ingest it with tools/btcap.py, how to map handles to UUIDs, how to scrub it, and how to promote findings into PROTOCOL.md and FACTS.md with the right evidence tag. Load whenever the user supplies or asks for a capture.
+description: Turn a Bluetooth HCI snoop log or pcap/pcapng file into protocol evidence - how the owner captures it from a phone, ingesting with tools/btcap.py, mapping handles to UUIDs, reassembling MTU chunks, scrubbing addresses, tokens and personal text with tools/scrub_capture.py, and promoting findings into PROTOCOL.md and FACTS.md as [H]. Use whenever the user supplies or asks for a capture, or asks to scrub MAC addresses, tokens or notification text from a capture before committing a fixture.
 ---
 
 # re-capture-ingestion
@@ -30,7 +30,10 @@ Reads btsnoop (datalinks 1001 and 1002), pcap and pcapng (linktype 187 or 201), 
 A target-specific replay tool belongs under `client/<slug>/` or `tools/` of that target, built on btcap's reader. Do not put target decoders in generic tools.
 
 ## Scrub and store
-- Raw captures contain device addresses, account tokens and sometimes photos or notification text. Do not commit them. Commit a scrubbed or synthetic fixture that keeps the byte structure; mask addresses.
+- Raw captures contain device addresses, account tokens and sometimes photos or notification text. Do not commit them, and do not commit btcap output unscrubbed.
+- Scrub every summary or fixture before committing:
+  `python tools/btcap.py capture.btsnoop --json raw.json` then `python tools/scrub_capture.py raw.json -o scrubbed.json --mask <serial> --mask <name>`.
+  Addresses become stable pseudonyms (02:00:00:00:00:01, ...), token-like values become `x` runs, and each `--mask` literal is masked in text and in ASCII/UTF-16LE payload hex with lengths kept. Masked payloads no longer match their CRC; the tool says how many. Read the output before committing: notification text and names you did not list are still there.
 - Record in the target's LOG.md: which capture, which action, what it settled, what it did not.
 
 ## Pitfalls (from the worked example)

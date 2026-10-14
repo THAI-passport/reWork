@@ -75,6 +75,24 @@ class InitHashLint(unittest.TestCase):
         self.assertEqual(rw.lint(ROOT), [])
 
 
+class TaskFlags(unittest.TestCase):
+    def test_undefined_flag_reported(self):
+        d = tempfile.mkdtemp()
+        os.makedirs(os.path.join(d, "targets", "x", "tasks"))
+        os.makedirs(os.path.join(d, "client", "x"))
+        with open(os.path.join(d, "targets", "x", "tasks", "HW-RECON.md"), "w") as f:
+            f.write("Run `python -m x probe --dry-run --made-up` and --prose-flag.\n```\nx send --slot 1\n```\n")
+        with open(os.path.join(d, "client", "x", "cli.py"), "w") as f:
+            f.write('ap.add_argument("--dry-run")\nap.add_argument("--slot")\n')
+        self.assertEqual(rw.task_flags(d, "x"), {"--made-up": ["HW-RECON.md"]})
+        shutil.rmtree(d)
+
+    def test_repo_targets_have_no_undefined_flags(self):
+        for slug in os.listdir(os.path.join(ROOT, "targets")):
+            if os.path.isdir(os.path.join(ROOT, "targets", slug, "tasks")):
+                self.assertEqual(rw.task_flags(ROOT, slug), {}, slug)
+
+
 class Recon(unittest.TestCase):
     def test_recon_splits_app_and_library(self):
         d = tempfile.mkdtemp()

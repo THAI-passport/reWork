@@ -1,6 +1,6 @@
 ---
 name: re-acquire
-description: Find, download, validate and hash the companion app, firmware or binary for a device. Covers going from a hardware model name to the app package, APKPure/APKMirror style mirrors, XAPK/split handling, integrity checks, provenance records, and what never to commit.
+description: Find, download, validate, hash and pin the companion app, firmware or binary for a device in SOURCES.md - from a hardware model name to the app package, APKPure/APKMirror style mirrors, XAPK/APKS split handling (base plus ABI split), integrity and identity checks, IPA notes, rebuildable SOURCES entries, and what never to commit. Use when the user asks to find, download, unpack, verify, hash or pin an APK, XAPK, APKS, IPA or firmware archive (gate G1).
 ---
 
 # re-acquire (gate G1)
@@ -19,7 +19,7 @@ description: Find, download, validate and hash the companion app, firmware or bi
 
 ## Validate (before any analysis)
 1. `unzip -t file` reports no errors.
-2. `.xapk` and `.apks` are zips: base APK plus split APKs (native libs per ABI, language, density) and `manifest.json`. Extract only the base APK first; extract the arm64 split only when native code matters.
+2. `.xapk` and `.apks` are zips: base APK plus split APKs (native libs per ABI, language, density) and `manifest.json`. Extract only the base APK first. Always list and record the ABI split (`config.arm64_v8a.apk` or `split_config.arm64_v8a.apk`) with its SHA-256 in SOURCES.md: native libraries live only there, and a base APK without `lib/` does not mean the app has no native code. Extract it when native code matters.
 3. Identity: `apktool d -s -f --no-res -o work/ap base.apk` then check `package=` in the manifest and versionName/versionCode in `apktool.yml`. Review permissions for anything out of character and note it.
 4. No `META-INF/*.RSA|DSA` v1 files usually means v2/v3 signing; verify with `apksigner verify --print-certs` if available. Signature trust is otherwise unverified; say so.
 5. If anything fails or looks malicious, stop and report. Never install or run the artifact.

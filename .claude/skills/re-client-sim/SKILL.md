@@ -1,6 +1,6 @@
 ---
 name: re-client-sim
-description: Build the open client for a reverse-engineered device in layers (pure byte builders, media/conversion, async session over an abstract link, CLI), plus a software device simulator, dry-run mode, safe-write guards, fixtures, tests, repo-rules lint and CI. Use after the protocol spec exists.
+description: Build the open client for a reverse-engineered device in layers (pure byte codecs, media conversion, Link abstraction, async session, CLI, per-model profiles), plus a software device simulator, dry-run mode, the per-device safe-write guard (reference code bundled), fixtures, tests, repo lint and CI. Use when the user asks to implement or test client/<slug>/, write a frame codec or simulator, add dry-run or safe-write protection, or set up CI (gate G4, after PROTOCOL.md exists).
 ---
 
 # re-client-sim (gate G4)
@@ -17,13 +17,13 @@ Location: `client/<slug>/` with its own `pyproject.toml` (core deps minimal, `[t
 7. **Profiles**: per-model data object; CLI flag selects data only.
 
 ## Safe-write guard (before any repeated-send feature)
-Per-device state file keyed by a hash of the address: write counter, last payload hash (skip identical), minimum interval, hard daily cap, warnings; count only after success; dry runs never count.
+Per-device state file keyed by a hash of the address: write counter, last payload hash (skip identical), minimum interval, hard daily cap, warnings; count only after success; dry runs never count; an unreadable state file refuses writes instead of resetting the budget. Reference shapes for `Link`, `RecordingLink` (with an OTA/DFU service blocklist) and `SafeWriteGuard`: `.claude/skills/re-client-sim/references/safe_write_and_link.py` (tested by `tests/test_skill_references.py`). Copy and adapt; do not weaken the guarantees.
 
 ## Make hardware tests possible
 - Log every status or telemetry message the device pushes (free space, size, mode) with a stable prefix, and keep them in a list on the session object. Free-space and mode tests read these numbers.
 - Offer a no-delta option so a deliberate identical rewrite is possible without turning the whole guard off.
 - Provide a passive logger (`tools/notify_log.py`) and a test-media generator (`tools/make_test_media.py`) so first contact needs no ad hoc scripts.
-- Every flag mentioned in a recon task must exist; verify with `--help` or a dry run when writing the pack.
+- Every flag mentioned in a recon task must exist: `python tools/rw.py taskflags <slug>`, then a dry run.
 
 ## Fixtures, lint, CI
 - Generate small synthetic captures with the same builders, commit with a manifest that says SYNTHETIC and a `--check` mode so drift fails CI. Include one deliberately malformed capture; the tools must report it, not crash.
