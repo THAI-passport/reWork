@@ -26,6 +26,26 @@ class DocsCommands(unittest.TestCase):
         for flag in ("--dry-run", "--local-file", "--accept-new-hash", "--max-heap", "--url", "--force", "--recover"):
             self.assertIn('"%s"' % flag, src, flag)
 
+    def test_skill_frontmatter(self):
+        for f in glob.glob(os.path.join(ROOT, ".claude", "skills", "*", "SKILL.md")):
+            folder = os.path.basename(os.path.dirname(f))
+            lines = open(f, encoding="utf-8").read().splitlines()
+            self.assertEqual(lines[0], "---", folder)
+            head = lines[1:lines.index("---", 1)]
+            meta = dict(l.split(": ", 1) for l in head)
+            self.assertEqual(meta.get("name"), folder)
+            self.assertTrue(0 < len(meta.get("description", "")) <= 1024, folder)
+            self.assertLess(len(lines), 120, folder)
+
+    def test_skill_paths_exist(self):
+        rx = re.compile(r"(\.claude/skills/[\w./-]+\.(?:py|md))")
+        bad = []
+        for f in glob.glob(os.path.join(ROOT, ".claude", "skills", "*", "SKILL.md")) + [os.path.join(ROOT, "README.md")]:
+            for m in rx.findall(open(f, encoding="utf-8").read()):
+                if not os.path.exists(os.path.join(ROOT, m)):
+                    bad.append((os.path.relpath(f, ROOT), m))
+        self.assertEqual(bad, [])
+
 
 if __name__ == "__main__":
     unittest.main()

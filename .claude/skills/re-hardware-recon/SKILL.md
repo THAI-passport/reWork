@@ -1,6 +1,6 @@
 ---
 name: re-hardware-recon
-description: Plan and run (or hand off) first contact with a real device after the protocol spec exists - run sheet, approvals, write budget, read-only qualification, container/size/limit tests, free-space and persistence tests, passive event logging, physical survey, and the gated destructive track. Also how to write step-by-step recon tasks that a weaker agent can follow without asking questions.
+description: Plan and run (or hand off) first contact with a real device after the protocol spec exists - run sheet, approvals, write budget, read-only qualification, limit, free-space and persistence tests, passive event logging, physical survey, the gated destructive track, and task packs a weaker agent can follow without asking. Use when the user asks to prepare or interpret targets/<slug>/tasks/ run sheets, budget device writes, check a task pack's flags, or record hardware results as [H] in PROTOCOL.md and FACTS.md (gate G5).
 ---
 
 # re-hardware-recon (gate G5 and any later hardware session)
@@ -10,7 +10,7 @@ Output: `targets/<slug>/tasks/` (created by `python tools/rw.py init`, from `tem
 ## Principles
 1. A cloud sandbox has no Bluetooth, USB or serial access. Hardware tasks need a person with a machine and the device. The agent prepares, the person executes, the agent interprets pasted output. Never claim hardware results you did not receive.
 2. Read-only first: scan, connect, read GATT/descriptors, listen for pushed status. Writes come one at a time after that, each with a stated purpose and a pre-computed cost.
-3. Everything that writes goes through a safe-write guard (counter, identical-payload skip, minimum interval, daily cap). Plan the day's write budget before the first write: sum the per-task write counts, stay under half the cap.
+3. Everything that writes goes through a safe-write guard (counter, identical-payload skip, minimum interval, daily cap; reference: `re-client-sim/references/safe_write_and_link.py`). Plan the day's write budget before the first write: sum the per-task write counts, stay under half the cap.
 4. Rewrite tests collide with the guard: an identical resend is skipped by design, so such tests need the no-delta option and the interval respected. Say so in the step, or the tester will conclude the device ignored them.
 5. The simulator proves consistency, not truth. After every hardware finding update the simulator and the spec together.
 6. Stop conditions beat persistence: one retry after a power cycle, then record and move on. Any freeze, reboot, odd reply or low free space stops the escalating test.
@@ -23,7 +23,7 @@ Output: `targets/<slug>/tasks/` (created by `python tools/rw.py init`, from `tem
 3. For every unknown in PROTOCOL.md section "Unknowns" add or map a task that settles it; remove tasks that do not apply and mark them `skipped: not applicable` in STATUS.md.
 4. For each task write: executor, writes used, preconditions, exact commands, expected output, an interpretation table (observation -> meaning -> action), stop condition, and the files to update. A table beats prose.
 5. Put a "trip-ups" table in README.md from the target's LOG.md: symptom, cause, fix.
-6. Verify what you can without hardware: run every command in dry-run or simulate mode; the pack must not contain a flag that does not exist.
+6. Verify what you can without hardware: `python tools/rw.py taskflags <slug>` must report 0 undefined flags (it checks every `--flag` in code spans of `tasks/*.md` against `client/<slug>/` and `tools/`), then run every command in dry-run or simulate mode.
 
 ## Standard tasks (generic order)
 Run sheet and approvals -> reference capture with the vendor app (approval) -> scan + read-only qualification -> second-radio survey -> dry runs -> container/format acceptance -> size/shape/orientation -> free space + rewrite behaviour -> power-cycle persistence -> throughput -> length/size limits -> passive event logging (`tools/notify_log.py`) -> non-destructive physical survey -> USB/serial observation -> destructive teardown (approval).

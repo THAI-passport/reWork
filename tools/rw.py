@@ -6,6 +6,7 @@
     python tools/rw.py hash <file> [--slug S]              size + SHA-256 (+ XAPK/APK info); append to SOURCES.md
     python tools/rw.py recon <dir> [--slug S] [--libs]     grep recipe pack over a decompiled tree -> recon.md
     python tools/rw.py lint [--root DIR]                   fail on vendor artifacts, emoji, secret-looking strings
+    python tools/rw.py taskflags <slug>                    every --flag in tasks/*.md code must exist in client/<slug>/ or tools/
 """
 import argparse
 import datetime
@@ -281,6 +282,40 @@ def cmd_lint(a):
     return 1 if problems else 0
 
 
+# --- taskflags ---------------------------------------------------------------------------------------
+CODE_RX = re.compile(r"```.*?```|`[^`\n]+`", re.S)   # fenced blocks and inline code spans
+FLAG_RX = re.compile(r"(?<![\w-])(--[a-z][a-z0-9-]*)")
+
+
+def task_flags(root, slug):
+    """Return {flag: [task files]} for flags in code spans that no client or tool source defines."""
+    used = {}
+    tdir = os.path.join(root, "targets", slug, "tasks")
+    for name in sorted(os.listdir(tdir)) if os.path.isdir(tdir) else []:
+        if name.endswith(".md"):
+            text = open(os.path.join(tdir, name), encoding="utf-8").read()
+            for block in CODE_RX.findall(text):
+                for f in FLAG_RX.findall(block):
+                    used.setdefault(f, set()).add(name)
+    src = []
+    for d in (os.path.join(root, "client", slug), os.path.join(root, "tools")):
+        for dp, _, fs in os.walk(d):
+            src += [open(os.path.join(dp, f), encoding="utf-8", errors="replace").read() for f in fs if f.endswith(".py")]
+    src = "\n".join(src)
+    return {f: sorted(n) for f, n in used.items() if '"%s"' % f not in src and "'%s'" % f not in src}
+
+
+def cmd_taskflags(a, root=ROOT):
+    if not os.path.isdir(os.path.join(root, "targets", a.slug, "tasks")):
+        print("no targets/%s/tasks/" % a.slug, file=sys.stderr)
+        return 2
+    missing = task_flags(root, a.slug)
+    for f, files in sorted(missing.items()):
+        print("%s: used in %s, not defined in client/%s/ or tools/" % (f, ", ".join(files), a.slug))
+    print("taskflags: %d undefined flag(s)" % len(missing))
+    return 1 if missing else 0
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -290,8 +325,10 @@ def main(argv=None):
     s = sub.add_parser("recon"); s.add_argument("dir"); s.add_argument("--slug"); s.add_argument("--libs", action="store_true")
     s.add_argument("--limit", type=int, default=15)
     s = sub.add_parser("lint"); s.add_argument("--root", default=ROOT)
+    s = sub.add_parser("taskflags"); s.add_argument("slug")
     a = p.parse_args(argv)
-    return {"init": cmd_init, "doctor": cmd_doctor, "hash": cmd_hash, "recon": cmd_recon, "lint": cmd_lint}[a.cmd](a)
+    return {"init": cmd_init, "doctor": cmd_doctor, "hash": cmd_hash, "recon": cmd_recon, "lint": cmd_lint,
+            "taskflags": cmd_taskflags}[a.cmd](a)
 
 
 if __name__ == "__main__":

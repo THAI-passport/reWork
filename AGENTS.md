@@ -76,7 +76,7 @@ targets/<slug>/      one directory per target, created by `python tools/rw.py in
 client/<slug>/       original client code, simulator, tests (created at gate 4)
 FIXES.md             open and fixed issues in this repo itself
 templates/           copied by init
-tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.py, notify_log.py, make_test_media.py, setup_tools.py, rebuild_analysis.py (shell wrappers: setup-tools.sh, rebuild-analysis.sh)
+tools/               rw.py (init, doctor, hash, recon, lint, taskflags), btcap.py, scrub_capture.py, crcfind.py, notify_log.py, make_test_media.py, setup_tools.py, rebuild_analysis.py (shell wrappers: setup-tools.sh, rebuild-analysis.sh)
 ```
 
 ## Gates (do not skip, do not reorder)
@@ -90,6 +90,9 @@ tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.
 | G5 Handoff | HANDOFF.md, recon task pack specialised (`tasks/`), LOG.md complete | re-workflow, re-hardware-recon |
 
 Work gate by gate without waiting for approval between gates. Commit and push at each gate. Update `TARGET.md` gate table as you go.
+
+## Skills to load
+`re-workflow` always; it holds the gate-to-skill map and the tag legend. Then as needed: `re-acquire` (get and pin the app), `re-static` (decompile, framework triage), `re-ble-android-patterns` (transports in decompiled Android code), `re-watch-targets` (watches and bands; its `references/vendor-stacks.md` helps any BLE device), `re-jieli` (when `libjl_*` natives or the 0xAE00 service appear), `re-capture-ingestion` (HCI snoop and pcap files, scrubbing), `re-protocol-spec`, `re-native-emulation`, `re-client-sim`, `re-hardware-recon` (only after software is exhausted and the user approves).
 
 ## Habits that paid off
 - Start from the UI action (the click that connects or sends), not the first constant you grep.
