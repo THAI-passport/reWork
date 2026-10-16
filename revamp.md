@@ -158,7 +158,7 @@ Before declaring the revamp complete:
 | E | Web / Electron RE | done | dbug-web-static, dbug-web-dynamic skills, web_static.py, web_dynamic.py |
 | F | Emulation & symbolic execution | done | dbug-emulation skill, emulation/jitter.py |
 | G | Network analysis enhancement | done | dbug-network-enhancement skill, network/analyzer.py |
-| H | Memory forensics | todo | |
+| H | Memory forensics | done | dbug-memory skill, memory/scanner.py |
 | I | Detection catalog & anti-anti-analysis | todo | |
 | J | CI, drift checks & reproducibility | todo | |
 | K | Configuration & profile management | todo | |
