@@ -48,6 +48,13 @@ Pass criteria: `targets/<slug>/` has SOURCES.md with hashes, a PROTOCOL.md where
 | `tools/setup_tools.py` | User-space JDK, jadx, apktool, venv (no admin rights); Linux, macOS, Windows. `setup-tools.sh` wraps it |
 | `tools/recover-failed-methods.sh` | Second-chance decompile via simple mode and CFR |
 | `tools/rebuild_analysis.py` | Rebuild a target's artifacts and jadx tree from SOURCES: hash-verified, idempotent, `--dry-run`, `--max-heap`, `--url`; Linux, macOS, Windows. `rebuild-analysis.sh` wraps it |
+| `.claude/skills/dbug-*` | 17 dbug skills: workflow orchestrator, sample triage, device cloaking, canary seeding, network gateway, eBPF capture, Frida instrumentation, native emulation, anti-analysis, C2 protocol, canary correlation, threat intel, privacy audit, AppSec MASVS, opsec safety, infostealer catalog, step rationale |
+| `orchestrator.py` | dbug master CLI driving the full dynamic analysis pipeline (G0-G5) across malware, privacy, appsec, and all profiles |
+| `config/` | dbug lab configuration, synthetic canaries, and mobile tracker catalog |
+| `parser_correlator/` | dbug parsers: PCAP decryptor, canary hunter, C2 decoder, family classifier, IOC extractor, YARA generator, privacy auditor, AppSec auditor |
+| `device_cloaking/`, `network_capture/`, `instrumentation/`, `sample_triage/` | dbug stealth pre-flight audit, gateway/eBPF capture, Frida agent scripts, static APK/DEX triage and native emulation |
+| `docs/` | dbug SOPs, step log, roadmap, threat model, and task plans |
+| `tests/test_dbug_framework.py` | dbug 16-suite end-to-end regression test harness |
 
 ## Manual quick start
 ```

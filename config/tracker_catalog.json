@@ -1,0 +1,126 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-10-16",
+  "trackers": [
+    {
+      "name": "Meta / Facebook Graph & Analytics",
+      "company": "Meta Platforms, Inc.",
+      "category": "advertising_attribution",
+      "domains": [
+        "graph.facebook.com",
+        "b-graph.facebook.com",
+        "connect.facebook.net",
+        "pixel.facebook.com"
+      ],
+      "risk_rating": "HIGH",
+      "description": "Collects advertising ID, app install attribution, deep linking parameters, and user interaction events."
+    },
+    {
+      "name": "Google Firebase & App Measurement",
+      "company": "Google LLC",
+      "category": "analytics_telemetry",
+      "domains": [
+        "app-measurement.com",
+        "firebaseinstallations.googleapis.com",
+        "firebaselogging.googleapis.com",
+        "adservice.google.com",
+        "pagead2.googlesyndication.com"
+      ],
+      "risk_rating": "MEDIUM",
+      "description": "App usage analytics, screen views, session duration, and device model telemetry."
+    },
+    {
+      "name": "AppsFlyer Attribution & Marketing SDK",
+      "company": "AppsFlyer Ltd.",
+      "category": "advertising_attribution",
+      "domains": [
+        "api2.appsflyer.com",
+        "t.appsflyer.com",
+        "conversions.appsflyer.com",
+        "events.appsflyer.com"
+      ],
+      "risk_rating": "HIGH",
+      "description": "Device fingerprinting, advertising ID, install campaign source, in-app purchases, and location metadata."
+    },
+    {
+      "name": "Adjust Attribution & Deep Linking",
+      "company": "Adjust GmbH",
+      "category": "advertising_attribution",
+      "domains": [
+        "app.adjust.com",
+        "event.adjust.com",
+        "signature.adjust.com"
+      ],
+      "risk_rating": "HIGH",
+      "description": "Attribution tracking, session starts, custom in-app events, and hardware identifiers."
+    },
+    {
+      "name": "Kochava Mobile Attribution",
+      "company": "Kochava Inc.",
+      "category": "advertising_attribution",
+      "domains": [
+        "control.kochava.com",
+        "smart.kochava.com"
+      ],
+      "risk_rating": "HIGH",
+      "description": "User acquisition attribution, device fingerprinting, and behavioral tracking."
+    },
+    {
+      "name": "ByteDance / TikTok Pangle & Analytics",
+      "company": "ByteDance Ltd.",
+      "category": "advertising_attribution",
+      "domains": [
+        "analytics.tiktok.com",
+        "log.byteoversea.com",
+        "toblog.ctobsnssdk.com",
+        "mon.byteoversea.com"
+      ],
+      "risk_rating": "HIGH",
+      "description": "Ad impression tracking, user behavior telemetry, clipboard inspection, and ad network synchronization."
+    },
+    {
+      "name": "Branch.io Deep Linking & Attribution",
+      "company": "Branch Metrics, Inc.",
+      "category": "advertising_attribution",
+      "domains": [
+        "api2.branch.io",
+        "app.link"
+      ],
+      "risk_rating": "MEDIUM",
+      "description": "Cross-platform deep linking parameters, referral attribution, and device characteristics."
+    },
+    {
+      "name": "Mixpanel Product Analytics",
+      "company": "Mixpanel, Inc.",
+      "category": "analytics_telemetry",
+      "domains": [
+        "api.mixpanel.com",
+        "decide.mixpanel.com"
+      ],
+      "risk_rating": "MEDIUM",
+      "description": "User event tracking, conversion funnels, and profile properties."
+    },
+    {
+      "name": "Sentry Error Monitoring",
+      "company": "Functional Software, Inc.",
+      "category": "crash_reporting",
+      "domains": [
+        "o0.ingest.sentry.io",
+        "sentry.io"
+      ],
+      "risk_rating": "LOW",
+      "description": "Application crash backtraces, breadcrumbs, OS version, and stack frame memory."
+    },
+    {
+      "name": "Unity Ads & Analytics",
+      "company": "Unity Technologies",
+      "category": "advertising_attribution",
+      "domains": [
+        "unityads.unity3d.com",
+        "cdp.cloud.unity3d.com"
+      ],
+      "risk_rating": "HIGH",
+      "description": "Gaming and mobile ad network mediation, device specs, and video ad view telemetry."
+    }
+  ]
+}
