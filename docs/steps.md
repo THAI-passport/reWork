@@ -262,3 +262,19 @@ Format conforms to `dbug-step-rationale`. Timestamps are in Asia/Saigon (+07:00)
   - **Rationale:** The user asked to scope emulator/AVD launch + adb-over-TCP on emulator.md and implement it so debugging holds up without being detected. The stealth layer masks emulator indicators (ro.kernel.qemu, ro.hardware, build fingerprint, model, etc.) and runs adbd on a non-default port to avoid default-port detection.
   - **Evidence:** [C] existing device_cloaking layers; [V] tests/test_emulator_launch.py (12 tests, dry-run, no device); [I] anti-emulator bypasses documented as best-effort.
 - **Step:** Ran `python tools/rw.py lint` (0 problems) and `python -m unittest discover -s tests` (111 passed, 6 skipped).
+
+## 2026-10-16 (Asia/Saigon) requirement.md install reference
+
+- **Step:** Added requirement.md listing every component needed to run reWork/dbug on
+  Windows, macOS, and Linux/Unix, with per-OS install commands (setup_tools.py for JDK
+  17 / jadx / apktool / venv; platform-tools + emulator for the new adb-over-TCP
+  feature; optional tshark, Frida, unicorn/capstone/pyelftools), plus verification and
+  restricted-network guidance.
+  - **Rationale:** The user asked for a requirement.md covering all requirements and how
+    to install them on major OSes so the emulator/AVD launch feature runs on the
+    majority of OSes out there.
+  - **Evidence:** [V] lint 0 problems; [V] requirement.md cross-references setup_tools.py,
+    emulator.md, tools/emulator_launch.py; no emoji/secrets/vendor artifacts.
+- **Step:** Ran python tools/rw.py lint (0 problems) and python -m unittest discover -s
+  tests (111 passed, 6 skipped).
+
