@@ -161,7 +161,7 @@ Before declaring the revamp complete:
 | H | Memory forensics | done | dbug-memory skill, memory/scanner.py |
 | I | Detection catalog & anti-anti-analysis | done | config/detection_catalog.json, bypass_antidebug.js extended (prctl, seccomp, sigaction, procfs variants) |
 | J | CI, drift checks & reproducibility | done | CI workflow exists in repo (App lacks `workflows` permission to modify); pinned deps, drift check |
-| K | Configuration & profile management | todo | |
+| K | Configuration & profile management | done | config/schemas/lab_config.schema.json, config/schema_validator.py, config/safe_write.py |
 
 ---
 
