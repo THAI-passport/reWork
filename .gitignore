@@ -18,3 +18,15 @@ __pycache__/
 *.egg-info/
 reports/*
 !reports/README.md
+
+# dbug framework generated artifacts (never commit captures, keys, or session data)
+sessions/
+captures/
+*.pcap
+*.pcapng
+sslkey.log
+*.log
+.env
+
+# dbug orchestrator auto-generated target workspaces (test output, not source)
+targets/current_sample/

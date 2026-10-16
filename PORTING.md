@@ -49,6 +49,21 @@ This file is the plan for bringing another repository's tools and skills into th
 - [ ] `README.md` / `setup-tools.sh` updated for any new dependency
 - [ ] Committed on `cline/ya8xm47p` (or a feature branch off it) and pushed
 
-## Blocker
+## Completed port: dbug (THAI-passport/dbug)
 
-"The other repo" is not identified in this environment: its URL or local path was not provided, and no second remote exists in this checkout. I need the user to supply the repo URL (or path) before files can be copied over. Everything above is ready to receive it.
+The dbug Android dynamic analysis / AppSec / privacy auditing framework has been ported into reWork on branch `cline/ya8xm47p-dbug-merge`:
+
+| dbug content | reWork location |
+|---|---|
+| 17 skills (`.claude/skills/dbug-*`) | `.claude/skills/dbug-*` |
+| `orchestrator.py`, `parser_correlator/`, `sample_triage/`, `device_cloaking/`, `network_capture/`, `instrumentation/` | repo root (preserves dbug's relative-path structure) |
+| `config/` (lab_config.yaml, mock_canaries.json, tracker_catalog.json, seed_canaries.py) | `config/` |
+| `docs/` (SOP, steps, roadmap, task plans, debug notes) | `docs/` |
+| `tests/test_framework_e2e.py` | `tests/test_dbug_framework.py` |
+
+Not ported (intentionally): `targets/*` sample-specific analysis workspaces (contain per-sample IOCs and reports; target-scoped, not framework), `samples/` (vendor artifacts, never committed).
+
+Adjustments made for reWork compatibility:
+- Fixed Python 3.11 f-string quote conflict in `orchestrator.py` (nested same-quote f-string on the YARA rule path line).
+- Added dbug-generated artifact patterns to `.gitignore` (`sessions/`, `captures/`, `*.pcap`, `*.pcapng`, `sslkey.log`, `*.log`, `.env`).
+- Verified: `python tools/rw.py lint` -> 0 problems; `python3 -m unittest discover -s tests` -> 26 tests OK (10 reWork + 16 dbug).

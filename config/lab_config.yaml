@@ -1,0 +1,56 @@
+# dbug Lab Configuration & Analysis Parameters
+# Reference schema for automated stealth Android malware sandbox
+
+lab_environment:
+  # Target sample under dynamic investigation
+  target_sample:
+    apk_path: "samples/sample.apk"        # Path to untrusted APK on host workstation
+    package_name: "com.example.malware"   # Target package name for spawn/monitoring
+    staging_path: "/data/local/tmp/sample.apk"
+
+  # Physical Android test device settings
+  device:
+    serial: ""                            # ADB serial; leave empty to auto-detect if single device attached
+    connection_type: "usb"                # usb | tcpip
+    adb_path: "adb"
+    remote_tmp_dir: "/data/local/tmp"
+    use_root: true                        # Use su -c for privileged provider operations
+
+  # Network topology and containment
+  network:
+    target_interface: "wlan0"             # Wi-Fi interface on physical Android test device
+    gateway_interface: "ap0"              # Dedicated AP interface on Linux gateway host
+    egress_interface: "eth0"              # Upstream internet interface on Linux host
+    gateway_ip: "192.168.44.1"
+    subnet_cidr: "192.168.44.0/24"
+    dns_port: 53
+    sinkhole_mode: false                  # If true, routes traffic to local INetSim sinkhole
+
+  # Out-of-band and runtime telemetry hooks
+  telemetry:
+    ecapture:
+      enabled: true
+      remote_binary: "/data/local/tmp/ecapture"
+      target_libssl: "/apex/com.android.conscrypt/lib64/libssl.so"
+      pcap_out: "/data/local/tmp/tls_decrypted.pcapng"
+      keylog_out: "/data/local/tmp/sslkey.log"
+
+    frida:
+      enabled: true
+      port: 38921                         # Non-default stealth port (masks default 27042)
+      remote_daemon_name: "hl_daemon"
+      spawn: true                         # Spawn fresh process vs attach
+      scripts:
+        - "instrumentation/agent/bypass_antidebug.js"
+        - "instrumentation/agent/crypto_dumper.js"
+        - "instrumentation/agent/socket_tracer.js"
+
+  # Analysis session execution defaults
+  analysis_defaults:
+    profile: "all"                        # Default operational profile: malware | privacy | appsec | all
+    duration_seconds: 120                 # Default observation time window
+    interactive: false                    # Set true for manual human tester workflow
+    pull_artifacts: true
+    post_clean_canaries: true
+    uninstall_after_run: true
+    output_dir: "./sessions"
