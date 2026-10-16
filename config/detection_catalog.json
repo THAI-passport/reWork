@@ -1,0 +1,140 @@
+{
+  "version": "1.0.0",
+  "description": "Catalog of known anti-debug / anti-Frida / anti-emulator checks per platform, with bypass techniques and evidence tags. Never claim undetectable; all dynamic claims tagged [I] until hardware-verified.",
+  "platforms": {
+    "Android": {
+      "checks": [
+        {
+          "id": "AND-001",
+          "name": "TracerPid check",
+          "technique": "Reads /proc/self/status and checks TracerPid != 0",
+          "bypass": "Rewrite /proc/self/status TracerPid line to 0 via Frida open/read intercept (bypass_antidebug.js)",
+          "evidence": "[I]"
+        },
+        {
+          "id": "AND-002",
+          "name": "ro.debuggable check",
+          "technique": "getprop ro.debuggable == 1 or Settings.Global.adb_enabled == 1",
+          "bypass": "resetprop ro.debuggable=0; LSPosed HideDevMode spoofs Settings.Global",
+          "evidence": "[C]"
+        },
+        {
+          "id": "AND-003",
+          "name": "ptrace(PTRACE_TRACEME) self-detection",
+          "technique": "Calls ptrace(PTRACE_TRACEME, 0, 0, 0) and expects EPERM if already traced",
+          "bypass": "Intercept ptrace and return 0 (bypass_antidebug.js)",
+          "evidence": "[I]"
+        },
+        {
+          "id": "AND-004",
+          "name": "/proc/self/maps Frida scan",
+          "technique": "Scans /proc/self/maps for frida, gum-js, gadget, linjector strings",
+          "bypass": "Filter /proc/self/maps lines to suppress Frida references (bypass_antidebug.js)",
+          "evidence": "[I]"
+        },
+        {
+          "id": "AND-005",
+          "name": "ApplicationInfo.FLAG_DEBUGGABLE",
+          "technique": "Checks ApplicationInfo.flags & FLAG_DEBUGGABLE (0x2)",
+          "bypass": "Frida hook on ApplicationInfo.flags to mask 0x2 bit",
+          "evidence": "[I]"
+        },
+        {
+          "id": "AND-006",
+          "name": "Anti-root binary scan",
+          "technique": "Checks for /system/bin/su, /system/xbin/su, /sbin/su, Magisk",
+          "bypass": "Frida hook on file existence checks to hide su paths",
+          "evidence": "[I]"
+        },
+        {
+          "id": "AND-007",
+          "name": "Default Frida port detection",
+          "technique": "Queries /proc/net/tcp for port 27042",
+          "bypass": "Run frida-server on non-default port (38921 Android / 27043 iOS)",
+          "evidence": "[C]"
+        },
+        {
+          "id": "AND-008",
+          "name": "Tuner/proxy detection",
+          "technique": "Checks for tun0 interface, http.proxyHost property, VPN service",
+          "bypass": "Use out-of-band eBPF capture; no proxy/VPN on device",
+          "evidence": "[C]"
+        }
+      ]
+    },
+    "iOS": {
+      "checks": [
+        {
+          "id": "IOS-001",
+          "name": "ptrace anti-attach",
+          "technique": "Calls ptrace(PT_DENY_ATTACH) to prevent debugger attachment",
+          "bypass": "Frida hook on ptrace to return 0",
+          "evidence": "[I]"
+        },
+        {
+          "id": "IOS-002",
+          "name": "sysctl kern.debugger",
+          "technique": "Checks sysctl kern.debugger for active debugger",
+          "bypass": "Frida hook on sysctl to mask debugger presence",
+          "evidence": "[I]"
+        },
+        {
+          "id": "IOS-003",
+          "name": "Amfi / entitlements check",
+          "technique": "Checks get-task-allow entitlement or AMFI restrictions",
+          "bypass": "Requires jailbreak with Amfi bypass; Frida hook on entitlement checks",
+          "evidence": "[I]"
+        },
+        {
+          "id": "IOS-004",
+          "name": "Frida gadget detection",
+          "technique": "Scans loaded libraries for FridaGadget.dylib",
+          "bypass": "Rename gadget binary; use frida-server instead",
+          "evidence": "[I]"
+        }
+      ]
+    },
+    "Desktop": {
+      "checks": [
+        {
+          "id": "DESK-001",
+          "name": "IsDebuggerPresent (Windows)",
+          "technique": "WinAPI IsDebuggerReturnValue or PEB.BeingDebugged",
+          "bypass": "Frida hook on IsDebuggerPresent to return 0; patch PEB.BeingDebugged",
+          "evidence": "[I]"
+        },
+        {
+          "id": "DESK-002",
+          "name": "ptrace check (Linux/macOS)",
+          "technique": "ptrace(PTRACE_TRACEME) self-detection",
+          "bypass": "Frida hook on ptrace to return 0",
+          "evidence": "[I]"
+        },
+        {
+          "id": "DESK-003",
+          "name": "Virtual machine detection",
+          "technique": "Checks for VM artifacts (VMware tools, VBoxGuest, /proc/scsi)",
+          "bypass": "Run on bare metal or clean VM; hide VM artifacts",
+          "evidence": "[I]"
+        },
+        {
+          "id": "DESK-004",
+          "name": "Timing-based detection",
+          "technique": "Measures instruction timing to detect single-stepping",
+          "bypass": "Avoid single-step; use breakpoint-based tracing",
+          "evidence": "[I]"
+        }
+      ]
+    }
+  },
+  "bypass_techniques": {
+    "procfs_rewrite": "Intercept open/read on /proc/self/status and /proc/self/maps to rewrite sensitive lines in memory",
+    "ptrace_return_zero": "Intercept ptrace(PTRACE_TRACEME) and related calls to return 0 instead of EPERM",
+    "resetprop": "Use resetprop (Magisk/KernelSU/APatch) to mask system properties at the init level",
+    "hide_devmode": "LSPosed HideDevMode module spoofs Settings.Global.adb_enabled at the system_server Binder level",
+    "non_default_port": "Run frida-server on randomized port (e.g., 38921) instead of default 27042",
+    "eBPF_out_of_band": "Capture TLS keys and traffic via kernel eBPF uprobes on Conscrypt libssl.so (no in-process tampering)",
+    "sigaction_handler": "Install sigaction handler for SIGTRAP/SIGSEGV to neutralize anti-debug signal tricks",
+    "seccomp_bypass": "Avoid seccomp filters that block ptrace; run in permissive seccomp mode"
+  }
+}

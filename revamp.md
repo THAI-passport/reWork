@@ -159,7 +159,7 @@ Before declaring the revamp complete:
 | F | Emulation & symbolic execution | done | dbug-emulation skill, emulation/jitter.py |
 | G | Network analysis enhancement | done | dbug-network-enhancement skill, network/analyzer.py |
 | H | Memory forensics | done | dbug-memory skill, memory/scanner.py |
-| I | Detection catalog & anti-anti-analysis | todo | |
+| I | Detection catalog & anti-anti-analysis | done | config/detection_catalog.json, bypass_antidebug.js extended (prctl, seccomp, sigaction, procfs variants) |
 | J | CI, drift checks & reproducibility | todo | |
 | K | Configuration & profile management | todo | |
 
