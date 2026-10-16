@@ -87,7 +87,7 @@ class TestDbugFramework(unittest.TestCase):
         self.assertIn("AARCH64 NATIVE STRING DECRYPTION EMULATION", res.stdout)
         self.assertIn("https://api.telegram.org/bot", res.stdout)
 
-    @unittest.skipUnless(shutil.which("bash"), "bash required (shell scripts are bash-only)")
+    @unittest.skipIf(os.name == "nt", "shell scripts target Linux/macOS; not run on Windows")
     def test_05_network_gateway_setup_script(self):
         """Gate G3: Test Linux Wi-Fi AP gateway shell manager."""
         res = self.run_cmd(["bash", "network_capture/gateway_setup.sh", "status", "--dry-run"])

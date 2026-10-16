@@ -79,7 +79,7 @@ class LauncherMethods(unittest.TestCase):
     def test_emulator_cmd_headless_flags(self):
         launcher = emulator_launch.EmulatorLauncher(avd="A", dry_run=True)
         cmd = launcher._emulator_cmd()
-        self.assertEqual(os.path.splitext(os.path.basename(cmd[0]))[0], "emulator")
+        self.assertEqual(os.path.basename(cmd[0]), "emulator")
         self.assertIn("-avd", cmd)
         self.assertIn("A", cmd)
         self.assertIn("-no-window", cmd)
@@ -99,8 +99,6 @@ class DeviceScriptTests(unittest.TestCase):
     def test_emulator_stealth_script_exists_and_executable(self):
         path = os.path.join(ROOT, "device_cloaking", "apply_emulator_stealth.sh")
         self.assertTrue(os.path.isfile(path))
-        if os.name == "nt":
-            self.skipTest("POSIX execute bit not represented on Windows")
         mode = stat.S_IMODE(os.stat(path).st_mode)
         self.assertTrue(mode & stat.S_IXUSR, "script must be executable")
 
@@ -151,7 +149,7 @@ class DoctorTests(unittest.TestCase):
         self.assertIn("Android SDK / emulator readiness", out)
         self.assertIn("[+] Dry-run doctor complete", out)
 
-    @unittest.skipIf(emulator_launch.which_adb() or emulator_launch.which_emulator(),
+    @unittest.skipIf(shutil.which("adb") or shutil.which("emulator"),
                      "Android SDK present on this host (hosted CI runners ship it)")
     def test_doctor_real_reports_missing_adb_emulator(self):
         # Only meaningful where neither adb nor emulator is installed.
