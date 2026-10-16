@@ -71,6 +71,39 @@ class InitHashLint(unittest.TestCase):
         self.assertEqual(rw.lint(ROOT), [])
 
 
+class CliDispatch(unittest.TestCase):
+    """Verify argparse CLI dispatch works end-to-end for every subcommand,
+    including hash/recon which require setup_parser arguments."""
+
+    def run_main(self, argv):
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+            code = rw.main(argv)
+        return code, buf.getvalue()
+
+    def test_all_subcommands_dispatch(self):
+        # init
+        d = sandbox()
+        code, _ = self.run_main(["init", "t900", "--name", "T900", "--goal", "cli test", "--root", d])
+        self.assertEqual(code, 0)
+        # hash
+        xapk = os.path.join(d, "targets", "t900", "artifacts", "app.xapk")
+        import zipfile
+        with zipfile.ZipFile(xapk, "w") as z:
+            z.writestr("manifest.json", '{"package_name":"com.example","version_name":"1.2"}')
+        code, _ = self.run_main(["hash", xapk, "--slug", "t900", "--root", d])
+        self.assertEqual(code, 0)
+        # recon
+        code, out = self.run_main(["recon", d, "--slug", "t900", "--limit", "2", "--root", d])
+        self.assertEqual(code, 0)
+        # lint
+        code, _ = self.run_main(["lint", "--root", ROOT])
+        self.assertEqual(code, 0)
+        # doctor (may report missing optional tools, but exits 0)
+        code, _ = self.run_main(["doctor"])
+        self.assertEqual(code, 0)
+
+
 class Recon(unittest.TestCase):
     def test_recon_splits_app_and_library(self):
         d = tempfile.mkdtemp()

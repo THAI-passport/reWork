@@ -48,9 +48,24 @@ def _init_setup(p):
     p.add_argument("slug")
     p.add_argument("--name")
     p.add_argument("--goal")
+    p.add_argument("--root", default=ROOT)
 
 
 def _lint_setup(p):
+    p.add_argument("--root", default=ROOT)
+
+
+def _hash_setup(p):
+    p.add_argument("file")
+    p.add_argument("--slug")
+    p.add_argument("--root", default=ROOT)
+
+
+def _recon_setup(p):
+    p.add_argument("dir")
+    p.add_argument("--slug")
+    p.add_argument("--libs", action="store_true")
+    p.add_argument("--limit", type=int, default=15)
     p.add_argument("--root", default=ROOT)
 
 
@@ -92,7 +107,7 @@ TOOLS = [("python3", ["python3", "--version"], True), ("git", ["git", "--version
          ("mitmproxy", ["mitmproxy", "--version"], False), ("binwalk", ["binwalk", "--version"], False)]
 
 
-def cmd_doctor(a):
+def cmd_doctor(a, root=ROOT):
     home = os.path.expanduser("~/tools")
     extra = os.pathsep.join([os.path.join(home, "jdk", "bin"), os.path.join(home, "jadx", "bin"), os.path.join(home, "apktool")])
     env = dict(os.environ, PATH=extra + os.pathsep + os.environ.get("PATH", ""))
@@ -312,7 +327,7 @@ def lint(root):
     return problems
 
 
-def cmd_lint(a):
+def cmd_lint(a, root=ROOT):
     problems = lint(a.root)
     for where, what in problems:
         print("%s: %s" % (where, what))
@@ -321,8 +336,8 @@ def cmd_lint(a):
 
 
 register_plugin("doctor", cmd_doctor, None, "report which RE tools are installed")
-register_plugin("hash", cmd_hash, None, "size + SHA-256 (+ XAPK/APK info); append to SOURCES.md")
-register_plugin("recon", cmd_recon, None, "grep recipe pack over a decompiled tree -> recon.md")
+register_plugin("hash", cmd_hash, _hash_setup, "size + SHA-256 (+ XAPK/APK info); append to SOURCES.md")
+register_plugin("recon", cmd_recon, _recon_setup, "grep recipe pack over a decompiled tree -> recon.md")
 register_plugin("lint", cmd_lint, _lint_setup, "fail on vendor artifacts, emoji, secret-looking strings")
 
 
@@ -334,7 +349,8 @@ def main(argv=None):
         if setup_parser:
             setup_parser(s)
     a = p.parse_args(argv)
-    return PLUGIN_REGISTRY[a.cmd][0](a)
+    root = getattr(a, "root", ROOT)
+    return PLUGIN_REGISTRY[a.cmd][0](a, root=root)
 
 
 if __name__ == "__main__":
