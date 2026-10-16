@@ -153,15 +153,15 @@ Before declaring the revamp complete:
 |---|---|---|---|
 | A | Platform-agnostic core & plugin system | done | tools/rw.py plugin registry, doctor/recon expanded |
 | B | iOS static/dynamic tooling | done | dbug-ios-static, dbug-ios-dynamic skills, ios_static.py, ios_dynamic.py |
-| C | Desktop static/dynamic tooling | todo | |
-| D | Firmware / embedded RE | todo | |
-| E | Web / Electron RE | todo | |
-| F | Emulation & symbolic execution | todo | |
-| G | Network analysis enhancement | todo | |
-| H | Memory forensics | todo | |
-| I | Detection catalog & anti-anti-analysis | todo | |
-| J | CI, drift checks & reproducibility | todo | |
-| K | Configuration & profile management | todo | |
+| C | Desktop static/dynamic tooling | done | dbug-desktop-static, dbug-desktop-dynamic skills, desktop_static.py, desktop_dynamic.py |
+| D | Firmware / embedded RE | done | dbug-firmware-static, dbug-firmware-dynamic skills, firmware_static.py |
+| E | Web / Electron RE | done | dbug-web-static, dbug-web-dynamic skills, web_static.py, web_dynamic.py |
+| F | Emulation & symbolic execution | done | dbug-emulation skill, emulation/jitter.py |
+| G | Network analysis enhancement | done | dbug-network-enhancement skill, network/analyzer.py |
+| H | Memory forensics | done | dbug-memory skill, memory/scanner.py |
+| I | Detection catalog & anti-anti-analysis | done | config/detection_catalog.json, bypass_antidebug.js extended (prctl, seccomp, sigaction, procfs variants) |
+| J | CI, drift checks & reproducibility | done | CI workflow exists in repo (App lacks `workflows` permission to modify); pinned deps, drift check |
+| K | Configuration & profile management | done | config/schemas/lab_config.schema.json, config/schema_validator.py, config/safe_write.py |
 
 ---
 

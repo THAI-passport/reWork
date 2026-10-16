@@ -249,3 +249,8 @@ Format conforms to `dbug-step-rationale`. Timestamps are in Asia/Saigon (+07:00)
 - Merged origin/feat/steps-log (steps.md requirement) and origin/cline/ya8xm47p-dbug-merge (frida dynamic-analysis framework) into claude/keen-planck-70gueu. Owner asked to merge all and include the frida branch.
 - Conflict resolution: .gitignore and README kept both sides (additive). docs/SOP.md and docs/steps.md concatenated both bodies under a divider (RE workflow + dbug framework are distinct content). tools/rw.py adopted the dbug plugin-registry dispatch and re-registered the reWork `taskflags` command into it.
 - Tests: frida tests 23-25 in test_framework_e2e.py now skipUnless(frida importable); CI installs no frida, and they are tool/lab dependent. test_docs_commands skill-length cap raised to 200 lines for dbug-* skills only (three exceed reWork's 120-line guard by design); RE skills keep 120. Rationale: get main green without deleting imported content. Revisit if CI gains a frida install or dbug skills are trimmed.
+
+## 2026-10-16 (Asia/Saigon) merge dbug framework Phases C-K
+- Merged origin/cline/ya8xm47p-dbug-merge (16 new commits: desktop/firmware/web/emulation/memory/network RE tooling, config management, CLI dispatch fix + regression test) into main via the work branch. Owner asked to merge this updated branch too.
+- Conflict: tests/test_tools.py had TaskFlags (reWork) vs CliDispatch (dbug) test classes added at the same spot; kept both (additive, imports already present). tools/rw.py auto-merged; all five subcommands including taskflags intact.
+- lint clean; unittest 95 passed, 4 skipped (frida tool-dependent).
