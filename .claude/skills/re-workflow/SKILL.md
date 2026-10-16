@@ -43,3 +43,7 @@ Independent surface-map tasks (per transport, per app, per native library) can b
 
 ## Failure handling
 If a gate cannot be completed (no network, artifact unobtainable, native code too large), write the blocker and the cheapest next action in TARGET.md, mark the gate `blocked`, and continue with any gate that does not depend on it.
+
+## Steps log
+Append every step and decision with rationale to `docs/steps.md` (Asia/Saigon time) as work proceeds. Required by AGENTS.md.
+

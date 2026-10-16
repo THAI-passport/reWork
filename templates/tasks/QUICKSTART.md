@@ -19,7 +19,7 @@ The pack is long on purpose so you do not have to read it all. Pick your situati
 4. One retry after a power cycle, then record and move on.
 5. Tag every finding `[C] [V] [H] [W] [I] [U]`.
 6. Use ASSUMPTIONS.md; log new assumptions; do not ask what a default can settle.
-7. After a decompile pass record findings in PROTOCOL.md, disputed values in FACTS.md, problems in LOG.md, reusable procedure in the matching skill, in the same commit.
+7. After a decompile pass record findings in PROTOCOL.md, disputed values in FACTS.md, problems in LOG.md, reusable procedure in the matching skill, and append the step/rationale to `docs/steps.md`, in the same commit.
 8. Never commit vendor files, dumps, captures with addresses, or test counts in docs.
 9. Run `python tools/rw.py lint` and the tests before committing.
 10. If a step is wrong or missing, fix this pack and add an Open item to the root FIXES.md.
