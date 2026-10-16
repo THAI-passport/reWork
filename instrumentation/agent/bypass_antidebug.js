@@ -307,4 +307,87 @@ Java.perform(() => {
             }
         });
     }
+
+    // 8. prctl anti-debug / anti-trace checks
+    const prctlPtr = Module.findExportByName("libc.so", "prctl");
+    if (prctlPtr) {
+        Interceptor.attach(prctlPtr, {
+            onEnter(args) {
+                this.option = args[0].toInt32();
+                if (this.option === 4 || this.option === 5 || this.option === 24 || this.option === 25) {
+                    send({
+                        event: "PRCTL_DEBUG_CHECK",
+                        option: this.option,
+                        callstack: Thread.backtrace(this.context, Backtracer.ACCURATE).map(DebugSymbol.fromAddress).join("\\n")
+                    });
+                }
+            },
+            onLeave(retval) {
+                if (this.option === 4) {
+                    retval.replace(ptr(1));
+                }
+            }
+        });
+    }
+
+    // 9. sigaction signal handler inspection (SIGTRAP, SIGSEGV, SIGABRT anti-debug)
+    const sigactionPtr = Module.findExportByName("libc.so", "sigaction");
+    if (sigactionPtr) {
+        Interceptor.attach(sigactionPtr, {
+            onEnter(args) {
+                this.signum = args[0].toInt32();
+                if (this.signum === 5 || this.signum === 11 || this.signum === 6) {
+                    send({
+                        event: "SIGACTION_DEBUG_HANDLER",
+                        signum: this.signum,
+                    });
+                }
+            },
+        });
+    }
+
+    // 10. seccomp filter check (PR_GET_SECCOMP / seccomp syscall)
+    const seccompPtr = Module.findExportByName("libc.so", "seccomp");
+    if (seccompPtr) {
+        Interceptor.attach(seccompPtr, {
+            onEnter(args) {
+                this.op = args[0].toInt32();
+                if (this.op === 1) {
+                    send({
+                        event: "SECCOMP_FILTER_INSTALL",
+                    });
+                }
+            },
+        });
+    }
+
+    // 11. Additional procfs variants: /proc/self/stat, /proc/self/cmdline
+    const openPtr = Module.findExportByName("libc.so", "open");
+    const openatPtr = Module.findExportByName("libc.so", "openat");
+    function sanitizeProcPath(p) {
+        if (!p) return false;
+        return p.indexOf("/proc/self/status") !== -1 ||
+               p.indexOf("/proc/self/maps") !== -1 ||
+               p.indexOf("/proc/self/stat") !== -1 ||
+               p.indexOf("/proc/self/cmdline") !== -1;
+    }
+    [openPtr, openatPtr].forEach(function(ptr) {
+        if (!ptr) return;
+        Interceptor.attach(ptr, {
+            onEnter(args) {
+                const idx = ptr === openPtr ? 0 : 1;
+                this.path = args[idx].readCString();
+                this.isProc = sanitizeProcPath(this.path);
+            },
+            onLeave(retval) {
+                if (this.isProc) {
+                    send({
+                        event: "PROCFILE_ACCESS",
+                        path: this.path,
+                        fd: retval.toInt32(),
+                    });
+                }
+            },
+        });
+    });
 })();
