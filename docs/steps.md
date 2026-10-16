@@ -278,3 +278,7 @@ Format conforms to `dbug-step-rationale`. Timestamps are in Asia/Saigon (+07:00)
 - **Step:** Ran python tools/rw.py lint (0 problems) and python -m unittest discover -s
   tests (111 passed, 6 skipped).
 
+
+## 2026-10-16 (Asia/Saigon) merge PR#6 emulator launcher
+- Merged origin/cline/0x0yhj88 (emulator/AVD launch + adb-over-TCP with stealth cloaking for no-phone/cloud dbug analysis). Owner asked to merge PR#6.
+- Fixed two environment-fragile tests the PR shipped: test_emulator_cmd_headless_flags asserted cmd[0]=="emulator" but SDK-present hosts resolve a full path (now basename); test_doctor_real_reports_missing_adb_emulator assumed no SDK but hosted macOS/Windows runners ship one (now skipIf adb/emulator present). Ubuntu CI passed; macOS/Windows were red on these two only. lint clean, 115 passed, 4 skipped.

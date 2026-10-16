@@ -1,6 +1,7 @@
 import contextlib
 import io
 import os
+import shutil
 import stat
 import sys
 import unittest
@@ -78,7 +79,7 @@ class LauncherMethods(unittest.TestCase):
     def test_emulator_cmd_headless_flags(self):
         launcher = emulator_launch.EmulatorLauncher(avd="A", dry_run=True)
         cmd = launcher._emulator_cmd()
-        self.assertEqual(cmd[0], "emulator")
+        self.assertEqual(os.path.basename(cmd[0]), "emulator")
         self.assertIn("-avd", cmd)
         self.assertIn("A", cmd)
         self.assertIn("-no-window", cmd)
@@ -148,8 +149,10 @@ class DoctorTests(unittest.TestCase):
         self.assertIn("Android SDK / emulator readiness", out)
         self.assertIn("[+] Dry-run doctor complete", out)
 
+    @unittest.skipIf(shutil.which("adb") or shutil.which("emulator"),
+                     "Android SDK present on this host (hosted CI runners ship it)")
     def test_doctor_real_reports_missing_adb_emulator(self):
-        # This host has neither adb nor emulator installed.
+        # Only meaningful where neither adb nor emulator is installed.
         code, out, err = run_main(["doctor"])
         self.assertEqual(code, 1)
         self.assertIn("adb", out)
