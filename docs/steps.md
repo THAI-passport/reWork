@@ -254,3 +254,31 @@ Format conforms to `dbug-step-rationale`. Timestamps are in Asia/Saigon (+07:00)
 - Merged origin/cline/ya8xm47p-dbug-merge (16 new commits: desktop/firmware/web/emulation/memory/network RE tooling, config management, CLI dispatch fix + regression test) into main via the work branch. Owner asked to merge this updated branch too.
 - Conflict: tests/test_tools.py had TaskFlags (reWork) vs CliDispatch (dbug) test classes added at the same spot; kept both (additive, imports already present). tools/rw.py auto-merged; all five subcommands including taskflags intact.
 - lint clean; unittest 95 passed, 4 skipped (frida tool-dependent).
+
+## 2026-10-16 (Asia/Saigon) emulator/AVD launch + adb-over-TCP with stealth cloaking
+
+- **Step:** Added `emulator.md` spec, `tools/emulator_launch.py`, `device_cloaking/apply_emulator_stealth.sh`, opt-in `--avd` integration in `orchestrator.py`, and `tests/test_emulator_launch.py`.
+  **Decision:** Implemented emulator/AVD launch + adb-over-TCP (non-default TCP port) with three-layer stealth cloaking (resetprop properties + emulator-indicator masking + Settings.Global developer-option hiding), dry-run capable, handing a TCP serial to the dbug pipeline; gated behind `--avd` so default USB behavior is unchanged.
+  - **Rationale:** The user asked to scope emulator/AVD launch + adb-over-TCP on emulator.md and implement it so debugging holds up without being detected. The stealth layer masks emulator indicators (ro.kernel.qemu, ro.hardware, build fingerprint, model, etc.) and runs adbd on a non-default port to avoid default-port detection.
+  - **Evidence:** [C] existing device_cloaking layers; [V] tests/test_emulator_launch.py (12 tests, dry-run, no device); [I] anti-emulator bypasses documented as best-effort.
+- **Step:** Ran `python tools/rw.py lint` (0 problems) and `python -m unittest discover -s tests` (111 passed, 6 skipped).
+
+## 2026-10-16 (Asia/Saigon) requirement.md install reference
+
+- **Step:** Added requirement.md listing every component needed to run reWork/dbug on
+  Windows, macOS, and Linux/Unix, with per-OS install commands (setup_tools.py for JDK
+  17 / jadx / apktool / venv; platform-tools + emulator for the new adb-over-TCP
+  feature; optional tshark, Frida, unicorn/capstone/pyelftools), plus verification and
+  restricted-network guidance.
+  - **Rationale:** The user asked for a requirement.md covering all requirements and how
+    to install them on major OSes so the emulator/AVD launch feature runs on the
+    majority of OSes out there.
+  - **Evidence:** [V] lint 0 problems; [V] requirement.md cross-references setup_tools.py,
+    emulator.md, tools/emulator_launch.py; no emoji/secrets/vendor artifacts.
+- **Step:** Ran python tools/rw.py lint (0 problems) and python -m unittest discover -s
+  tests (111 passed, 6 skipped).
+
+
+## 2026-10-16 (Asia/Saigon) merge PR#6 emulator launcher
+- Merged origin/cline/0x0yhj88 (emulator/AVD launch + adb-over-TCP with stealth cloaking for no-phone/cloud dbug analysis). Owner asked to merge PR#6.
+- Fixed two environment-fragile tests the PR shipped: test_emulator_cmd_headless_flags asserted cmd[0]=="emulator" but SDK-present hosts resolve a full path (now basename); test_doctor_real_reports_missing_adb_emulator assumed no SDK but hosted macOS/Windows runners ship one (now skipIf adb/emulator present). Ubuntu CI passed; macOS/Windows were red on these two only. lint clean, 115 passed, 4 skipped.

@@ -109,6 +109,7 @@ TOOLS = [("python3", ["python3", "--version"], True), ("git", ["git", "--version
          ("java", ["java", "-version"], False), ("jadx", ["jadx", "--version"], False),
          ("apktool", ["apktool", "--version"], False), ("ffmpeg", ["ffmpeg", "-version"], False),
          ("tshark", ["tshark", "--version"], False), ("adb", ["adb", "version"], False),
+         ("emulator", ["emulator", "-version"], False),
          ("frida", ["frida", "--version"], False), ("objection", ["objection", "--version"], False),
          ("radare2", ["radare2", "--version"], False), ("rizin", ["rizin", "--version"], False),
          ("ghidra", ["ghidra", "--version"], False), ("qiling", None, False),
@@ -137,9 +138,19 @@ def cmd_doctor(a, root=ROOT):
             print("%-8s ok  (python module)" % mod)
         except ImportError:
             print("%-8s absent (python module, optional)" % mod)
+    # Android emulator readiness (needed for the --avd / adb-over-TCP path;
+    # optional, not required for static analysis or dry-run).
+    kvm_ok = False
+    try:
+        kvm_ok = os.access("/dev/kvm", os.R_OK | os.W_OK)
+    except OSError:
+        kvm_ok = False
+    print("%-8s %s" % ("kvm", "available" if kvm_ok else "not available "
+          "(software rendering; slow without nested virtualization)"))
     if missing_required:
         return 1
     print("run python tools/setup_tools.py to install jdk, jadx, apktool without admin rights")
+    print("run python tools/emulator_launch.py doctor for Android SDK / emulator install hints")
     return 0
 
 

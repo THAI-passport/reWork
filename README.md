@@ -24,6 +24,7 @@ Pass criteria: `targets/<slug>/` has SOURCES.md with hashes, a PROTOCOL.md where
 | `AGENTS.md` | Contract: prompt format, ground rules, logs, platform and live-contact rules, workflow, evidence tags, gates |
 | `FIXES.md` | Open and fixed issues in reWork itself |
 | `CLAUDE.md` | Imports AGENTS.md for Claude Code |
+| `requirement.md` | All components needed to run reWork/dbug on Windows, macOS, and Linux/Unix, with per-OS install commands |
 | `.claude/skills/re-workflow` | Orchestrator, entry point |
 | `.claude/skills/re-acquire` | Hardware name to app, download, validate, hash |
 | `.claude/skills/re-static` | jadx/apktool survey, surface map, obfuscation, decompiler failures |
@@ -39,6 +40,7 @@ Pass criteria: `targets/<slug>/` has SOURCES.md with hashes, a PROTOCOL.md where
 | `docs/NEXT-PASS-PROMPT.md` | Prompt for an agent pass over reBeamBox, reWork and reWatch |
 | `templates/` | TARGET, SOURCES, FACTS, PROTOCOL, LOG, HANDOFF |
 | `tools/rw.py` | `init`, `doctor`, `hash`, `recon`, `lint`, `taskflags` (stdlib only) |
+| `tools/emulator_launch.py` | Launch an Android AVD over adb-over-TCP with stealth cloaking; dry-run capable; hands a TCP serial to the dbug pipeline (see `emulator.md`) |
 | `tools/btcap.py` | btsnoop/pcap/pcapng to ATT write/notify table by UUID |
 | `tools/scrub_capture.py` | Mask addresses, tokens and named literals in a btcap summary, length-preserving |
 | `tools/crcfind.py` | Identify a CRC from sample frames |
