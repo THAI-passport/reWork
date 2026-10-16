@@ -7,11 +7,12 @@ You are reverse engineering a consumer device or its companion app so an open, l
 ```
 Reverse engineer: <device or app name(s)>.   Goal: <what the client must do>.
 ```
+
 Everything else is optional (package name, artifact path, transport hint). If it is missing, find it yourself. Do not ask questions you can answer by searching, reading, or choosing a default. Ask only when blocked (no network, ambiguous legal status, needs hardware). When you pick a default, write it in `targets/<slug>/TARGET.md` under Assumptions and move on.
 
 ## Ground rules (non-negotiable)
 1. Authorized, interoperability-focused work on hardware and software the user owns or may lawfully analyse. Do not defeat paid-feature gates, DRM, or other users' accounts. Do not touch vendor servers beyond downloading the public artifact.
-2. Static analysis only by default. Never install or run the target app. Dynamic work (emulator, capture) only if the user asks.
+2. Static analysis only by default. Never install or run the target app. Dynamic work (emulator, capture) only if the user asks. Emulator/AVD launch is opt-in (`--avd`), dry-run capable with zero Android tooling, and leaves default USB behavior unchanged.
 3. Never commit vendor artifacts: APK, XAPK, IPA, dex, jar, `.so`, firmware images, decompiled trees, third-party assets, tokens, or signed URLs. Commit notes in your own words, hashes, source URLs, scripts, original code, tests. `python tools/rw.py lint` enforces this.
 4. No emoji in docs or code. Plain ASCII punctuation where easy.
 5. Every factual claim carries an evidence tag (below). Untagged claims are bugs.
@@ -28,8 +29,10 @@ Conflicting values live only in `targets/<slug>/FACTS.md`; other docs link there
 - When a log entry repeats across targets, promote it into the matching skill and delete the repetition.
 
 ## Platform support
-- Supported for now: Linux (Debian/Ubuntu, including headless containers) and macOS. Others are paused: do not test on them or maintain their guides, but keep code portable (`os.path`, no shell-only syntax in Python tools).
+- Priority platforms: Linux (Debian/Ubuntu, including headless containers) and macOS. Windows is supported on a best-effort basis: the Python tools (`rw.py`, `btcap.py`, `crcfind.py`) must run natively there; only `recover-failed-methods.sh` needs bash (Git Bash or WSL). Linux and macOS get tested; Windows is checked in CI only.
+- Write tools in Python 3 standard library, not bash, so one implementation serves all three. Shell files are thin wrappers. Use `os.path`/`pathlib`, `shutil.which`, no `sha256sum`/`declare -A`/GNU-only flags.
 - When you add a dependency, script, or setup step, update `README.md` and `tools/setup-tools.sh`.
+- Cloud / no-phone readiness: emulator/AVD launch works on cloud instances with no physical device. KVM is detected (`/dev/kvm`); without KVM the launcher auto-enables software rendering (`-gpu off`, `-no-accel`) with a longer boot timeout and forces headless when `DISPLAY` is unset.
 - If the platform lacks something the work needs (no Bluetooth adapter, no display, no root, no network to a mirror), tell the user which platform, what is missing, and the options you see. Do not silently skip it or work around a design rule. Record it under Open in `FIXES.md`.
 - Say which platforms you actually ran a change on and which are untested.
 
@@ -50,6 +53,8 @@ Real systems means a physical device, a vendor server, a store listing, or any l
 - Work in phases: a coherent chunk that passes its own checks (tests, `python tools/rw.py lint`). Commit after every finished phase; push after every gate. Message format: `<slug> G<n>: <what the phase delivers>` plus a short body.
 - Never push to `main` directly. Use the designated work branch and offer a pull request when a gate set is done; do not open one unasked.
 - Capture-independent work (pure codecs, state machines, simulators, tests) may be built before hardware or captures exist. Capture-dependent work (timings, real limits, vendor quirks) waits for real data. Mark built-ahead work as such; no claim becomes `[H]` without hardware evidence.
+- Pin and verify artifacts by SHA-256, never by a floating "latest" link. Record URL, SHA-256 and version in `SOURCES.md`; a rebuild always verifies against the pinned hash and refuses on a mismatch.
+- Emulator/AVD launch is opt-in: `orchestrator.py` (`--avd`/`--emulator-tcp-port`/`--emulator-port`/`--keep-emulator`) starts the emulator before Stage 0, hands the adb-over-TCP serial to the pipeline, and stops it after teardown. Default USB behavior unchanged. Validate with `python tools/emulator_launch.py launch --avd <name> --dry-run` and `tests/test_emulator_launch.py` (no device needed).
 - Stop and ask when a step needs the user: logins, installs needing root, payments, providing hardware, or approving a write to a real device.
 - Never commit `.env`, tokens, signed URLs, personal data (addresses, phone numbers, account ids, device serials, MAC addresses), or captures that contain them. Scrub before saving; mask addresses by default.
 
@@ -64,9 +69,13 @@ targets/<slug>/      one directory per target, created by `python tools/rw.py in
   HANDOFF.md         final report: what is done, what is unverified, next hardware steps
   artifacts/ work/   git-ignored
 client/<slug>/       original client code, simulator, tests (created at gate 4)
-FIXES.md             open and fixed issues in this repo itself
+FIXES.md             open and fixed issues in reWork itself
+emulator.md          full spec for emulator/AVD launch over adb-over-TCP with stealth cloaking
 templates/           copied by init
-tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.py, setup-tools.sh
+tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.py, emulator_launch.py, setup-tools.sh, recover-failed-methods.sh
+orchestrator.py      opt-in emulator launch before Stage 0, adb-over-TCP serial hand-off, teardown
+device_cloaking/     apply_emulator_stealth.sh and related device-side stealth scripts
+tests/               test_tools.py, test_emulator_launch.py (dry-run, no device required)
 ```
 
 ## Gates (do not skip, do not reorder)
@@ -80,6 +89,9 @@ tools/               rw.py (init, doctor, hash, recon, lint), btcap.py, crcfind.
 | G5 Handoff | HANDOFF.md, hardware test plan, LOG.md complete | re-workflow |
 
 Work gate by gate without waiting for approval between gates. Commit and push at each gate. Update `TARGET.md` gate table as you go.
+
+## Skills to load
+`re-workflow` always; it holds the gate-to-skill map and the tag legend. Then as needed: `re-acquire` (get and pin the app), `re-static` (decompile, framework triage), `re-protocol-spec`, `re-native-emulation`, `re-client-sim`.
 
 ## Habits that paid off
 - Start from the UI action (the click that connects or sends), not the first constant you grep.
