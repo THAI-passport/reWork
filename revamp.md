@@ -156,7 +156,7 @@ Before declaring the revamp complete:
 | C | Desktop static/dynamic tooling | done | dbug-desktop-static, dbug-desktop-dynamic skills, desktop_static.py, desktop_dynamic.py |
 | D | Firmware / embedded RE | done | dbug-firmware-static, dbug-firmware-dynamic skills, firmware_static.py |
 | E | Web / Electron RE | done | dbug-web-static, dbug-web-dynamic skills, web_static.py, web_dynamic.py |
-| F | Emulation & symbolic execution | todo | |
+| F | Emulation & symbolic execution | done | dbug-emulation skill, emulation/jitter.py |
 | G | Network analysis enhancement | todo | |
 | H | Memory forensics | todo | |
 | I | Detection catalog & anti-anti-analysis | todo | |
