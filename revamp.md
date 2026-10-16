@@ -157,7 +157,7 @@ Before declaring the revamp complete:
 | D | Firmware / embedded RE | done | dbug-firmware-static, dbug-firmware-dynamic skills, firmware_static.py |
 | E | Web / Electron RE | done | dbug-web-static, dbug-web-dynamic skills, web_static.py, web_dynamic.py |
 | F | Emulation & symbolic execution | done | dbug-emulation skill, emulation/jitter.py |
-| G | Network analysis enhancement | todo | |
+| G | Network analysis enhancement | done | dbug-network-enhancement skill, network/analyzer.py |
 | H | Memory forensics | todo | |
 | I | Detection catalog & anti-anti-analysis | todo | |
 | J | CI, drift checks & reproducibility | todo | |
