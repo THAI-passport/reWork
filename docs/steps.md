@@ -281,4 +281,4 @@ Format conforms to `dbug-step-rationale`. Timestamps are in Asia/Saigon (+07:00)
 
 ## 2026-10-16 (Asia/Saigon) merge PR#6 emulator launcher
 - Merged origin/cline/0x0yhj88 (emulator/AVD launch + adb-over-TCP with stealth cloaking for no-phone/cloud dbug analysis). Owner asked to merge PR#6.
-- Fixed two environment-fragile tests the PR shipped: test_emulator_cmd_headless_flags asserted cmd[0]=="emulator" but SDK-present hosts resolve a full path (now basename); test_doctor_real_reports_missing_adb_emulator assumed no SDK but hosted macOS/Windows runners ship one (now skipIf adb/emulator present). Ubuntu CI passed; macOS/Windows were red on these two only. lint clean, 115 passed, 4 skipped.
+- Fixed Windows+SDK-present test fragility across the dbug suite: emulator cmd basename strips .exe; doctor missing-tooling test gates on the tool's own ANDROID_HOME-aware detection; stealth-script exec-bit test skips on Windows; three bash/.sh dbug tests (gateway_setup.sh x2, hide_dev_options.sh) skip when bash is absent. These .sh tests were already red on Windows main from the earlier dbug merges. lint clean; 115 passed, 4 skipped on Linux.

@@ -109,6 +109,7 @@ class TestDbugFramework(unittest.TestCase):
         self.assertIn("AARCH64 NATIVE STRING DECRYPTION EMULATION", res.stdout)
         self.assertIn("https://api.telegram.org/bot", res.stdout)
 
+    @unittest.skipUnless(shutil.which("bash"), "bash required (shell scripts are bash-only)")
     def test_05_network_gateway_setup_script(self):
         """Gate G3: Test Linux Wi-Fi AP gateway shell manager."""
         res = self.run_cmd(["bash", "network_capture/gateway_setup.sh", "status", "--dry-run"])
@@ -347,6 +348,7 @@ class TestDbugFramework(unittest.TestCase):
         self.assertIn("Tier 6", res.stdout)
         self.assertIn("pristine baseline", res.stdout)
 
+    @unittest.skipUnless(shutil.which("bash"), "bash required (shell scripts are bash-only)")
     def test_18_hide_dev_options_dry_run(self):
         """Sanitizer: Test hide_dev_options.sh dry-run mode."""
         res = self.run_cmd([
