@@ -102,5 +102,65 @@ class DeviceScriptTests(unittest.TestCase):
         self.assertTrue(mode & stat.S_IXUSR, "script must be executable")
 
 
+class KvmCloudTests(unittest.TestCase):
+    def test_kvm_available_returns_bool(self):
+        # kvm_available() must always return a bool, never raise
+        result = emulator_launch.kvm_available()
+        self.assertIsInstance(result, bool)
+
+    def test_android_home_returns_string(self):
+        result = emulator_launch.android_home()
+        self.assertIsInstance(result, str)
+
+    def test_no_kvm_uses_soft_boot_timeout(self):
+        # No KVM on this host, so a real (non-dry-run) launcher should pick
+        # the longer software-rendering boot timeout.
+        launcher = emulator_launch.EmulatorLauncher(avd="A", dry_run=False)
+        self.assertTrue(launcher.no_kvm)
+        self.assertEqual(launcher.boot_timeout,
+                         emulator_launch.DEFAULT_SOFT_BOOT_TIMEOUT)
+
+    def test_emulator_cmd_includes_no_accel_when_no_kvm(self):
+        launcher = emulator_launch.EmulatorLauncher(avd="A", dry_run=False)
+        self.assertTrue(launcher.no_kvm)
+        cmd = launcher._emulator_cmd()
+        self.assertIn("-no-accel", cmd)
+
+    def test_emulator_cmd_no_accel_when_host_has_no_kvm(self):
+        # This host has no /dev/kvm, so auto-detection enables software
+        # rendering regardless of the no_kvm flag.
+        launcher = emulator_launch.EmulatorLauncher(avd="A", dry_run=False)
+        if not emulator_launch.kvm_available():
+            self.assertTrue(launcher.no_kvm)
+            cmd = launcher._emulator_cmd()
+            self.assertIn("-no-accel", cmd)
+
+    def test_headless_when_no_display(self):
+        # Cloud/container instances lack DISPLAY; launcher should stay headless.
+        launcher = emulator_launch.EmulatorLauncher(avd="A", dry_run=True)
+        self.assertTrue(launcher.headless)
+
+
+class DoctorTests(unittest.TestCase):
+    def test_doctor_dry_run_requires_no_tooling(self):
+        code, out, err = run_main(["doctor", "--dry-run"])
+        self.assertEqual(code, 0, err)
+        self.assertIn("Android SDK / emulator readiness", out)
+        self.assertIn("[+] Dry-run doctor complete", out)
+
+    def test_doctor_real_reports_missing_adb_emulator(self):
+        # This host has neither adb nor emulator installed.
+        code, out, err = run_main(["doctor"])
+        self.assertEqual(code, 1)
+        self.assertIn("adb", out)
+        self.assertIn("emulator", out)
+        self.assertIn("Install per OS:", out)
+        self.assertIn("Linux", out)
+        self.assertIn("macOS", out)
+        self.assertIn("Windows", out)
+        self.assertIn("avdmanager create avd", out)
+        self.assertIn("dry-run", out)
+
+
 if __name__ == "__main__":
     unittest.main()

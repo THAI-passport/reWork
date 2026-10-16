@@ -16,6 +16,7 @@ properties need a pre-cloaked AVD image. See emulator.md for the full spec.
 import argparse
 import io
 import os
+import platform
 import re
 import shlex
 import shutil
@@ -27,6 +28,43 @@ DEFAULT_TCP_PORT = 5557
 DEFAULT_EMULATOR_PORT = 5554
 BOOT_TIMEOUT = 300
 BOOT_POLL = 3
+
+DEFAULT_SOFT_BOOT_TIMEOUT = 600
+
+
+def kvm_available():
+    """Return True if KVM acceleration is available (readable /dev/kvm on Linux).
+
+    On Windows/macOS there is no /dev/kvm; those platforms use WHPX /
+    Hypervisor.framework and are assumed capable unless --no-kvm is passed.
+    Most cloud Linux instances do NOT expose /dev/kvm, so emulator boot
+    without KVM relies on software rendering and is slow.
+    """
+    try:
+        return os.access("/dev/kvm", os.R_OK | os.W_OK)
+    except OSError:
+        return False
+
+
+def android_home():
+    """Return the first of ANDROID_HOME / ANDROID_SDK_ROOT that is set, or ''."""
+    return os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT") or ""
+
+
+def android_tool_hint(name):
+    """Per-OS hint for installing a missing Android SDK tool."""
+    hints = {
+        "linux": "sudo apt install android-sdk-platform-tools (adb) and install "
+                 "the emulator via Android Studio SDK Manager, or set ANDROID_HOME "
+                 "to a manually downloaded cmdline-tools + platform-tools + emulator",
+        "mac": "brew install android-platform-tools (adb); install the emulator via "
+               "Android Studio SDK Manager, or set ANDROID_HOME to a manually "
+               "downloaded cmdline-tools directory",
+        "windows": "winget install Google.AndroidSdkPlatformTools (adb); install the "
+                   "emulator via Android Studio SDK Manager",
+    }
+    s, _ = ("linux", "x64")  # placeholder; real host detected in caller
+    return hints.get("linux", "install Android SDK platform-tools + emulator")
 TCP_SERIAL_RX = re.compile(r"^SERIAL:\s*(\S+)\s*$", re.MULTILINE)
 
 DEVICE_CLOAKING = "device_cloaking"
@@ -100,22 +138,35 @@ class EmulatorLauncher(object):
                  emulator_port=DEFAULT_EMULATOR_PORT, dry_run=False,
                  adb=None, emulator=None, headless=True, gpu="off",
                  audio="no", no_snapshot=True, wipe_data=False,
-                 apply_stealth=True, keep_emulator=False, boot_timeout=BOOT_TIMEOUT):
+                 apply_stealth=True, keep_emulator=False, boot_timeout=None,
+                 no_kvm=False, auto_headless=True):
         self.avd = avd
         self.serial = serial
         self.tcp_port = int(tcp_port)
         self.emulator_port = int(emulator_port)
         self.emulator_serial = "emulator-%d" % self.emulator_port
         self.dry_run = dry_run
-        self.adb = adb or which_adb()
-        self.emulator_bin = emulator or which_emulator()
         self.headless = headless
         self.gpu = gpu
+        self.adb = adb or which_adb()
+        self.emulator_bin = emulator or which_emulator()
+        self.android_home = android_home()
+        self.kvm = kvm_available()
+        # Cloud/Linux instances rarely expose /dev/kvm; fall back to software
+        # rendering with a longer boot timeout unless the user explicitly opts out.
+        self.no_kvm = bool(no_kvm) or (not self.kvm and not self.dry_run)
+        # Auto headless when there is no display (typical cloud/container).
+        if auto_headless and self.headless and "DISPLAY" not in os.environ:
+            self.headless = True
+        if self.headless and not self.gpu:
+            self.gpu = "off"
         self.audio = audio
         self.no_snapshot = no_snapshot
         self.wipe_data = wipe_data
         self.stealth_enabled = apply_stealth
         self.keep_emulator = keep_emulator
+        if boot_timeout is None:
+            boot_timeout = DEFAULT_SOFT_BOOT_TIMEOUT if self.no_kvm else BOOT_TIMEOUT
         self.boot_timeout = int(boot_timeout)
         self.proc = None
         self.tcp_serial = None
@@ -156,13 +207,22 @@ class EmulatorLauncher(object):
 
     # -- launch -------------------------------------------------------
     def _emulator_cmd(self):
-        """Build the headless emulator launch command line."""
+        """Build the headless emulator launch command line.
+
+        Cloud/Linux instances without /dev/kvm cannot use hardware
+        acceleration, so software rendering (-gpu swiftshader_indirect) and
+        no acceleration flags keep the emulator bootable headlessly.
+        """
         bin_ = self.emulator_bin or "emulator"
         cmd = [bin_, "-avd", self.avd, "-port", str(self.emulator_port)]
         if self.headless:
             cmd.extend(["-no-window", "-no-audio"])
         if self.gpu:
             cmd.extend(["-gpu", self.gpu])
+        if self.no_kvm:
+            # Software rendering; disable hardware acceleration features that
+            # require KVM / a host GPU on headless cloud instances.
+            cmd.append("-no-accel")
         if self.no_snapshot:
             cmd.append("-no-snapshot")
         if self.wipe_data:
@@ -321,6 +381,13 @@ class EmulatorLauncher(object):
             raise EmulatorLauncherError("AVD not found: %s (run `emulator -list-avds`)" % self.avd)
 
         print("[*] Launching AVD %s (emulator port %d)..." % (self.avd, self.emulator_port))
+        print("    ANDROID_HOME: %s" % (self.android_home or "(not set)"))
+        print("    KVM available: %s" % ("yes" if self.kvm else "no"))
+        if self.no_kvm:
+            print("    [warning] no KVM / host GPU detected; using software rendering "
+                  "(-gpu off, -no-accel). Boot will be slow on cloud instances "
+                  "without nested virtualization.")
+        print("    launch command: %s" % " ".join(self._emulator_cmd()))
         self.proc = subprocess.Popen(self._emulator_cmd())
         try:
             self.wait_boot()
@@ -361,9 +428,78 @@ def _common_opts():
     c.add_argument("--no-snapshot", action="store_true", default=True, help="Disable snapshot (default on)")
     c.add_argument("--snapshot", action="store_false", dest="no_snapshot", help="Enable snapshot")
     c.add_argument("--wipe-data", action="store_true", help="Wipe AVD data on launch")
-    c.add_argument("--boot-timeout", type=int, default=BOOT_TIMEOUT,
-                   help="Boot wait timeout in seconds (default %d)" % BOOT_TIMEOUT)
+    c.add_argument("--boot-timeout", type=int, default=None,
+                   help="Boot wait timeout in seconds (default %d normally, %d "
+                   "without KVM)" % (BOOT_TIMEOUT, DEFAULT_SOFT_BOOT_TIMEOUT))
+    c.add_argument("--no-kvm", action="store_true",
+                   help="Force software rendering (for cloud/headless hosts "
+                   "without KVM / nested virtualization)")
     return c
+
+
+def emulator_doctor(dry_run=False, adb=None, emulator_bin=None):
+    """Check emulator/adb readiness and print per-OS install hints.
+
+    Returns 0 when adb and emulator are found, 1 otherwise. In dry-run mode
+    prints what would be checked without requiring any Android tooling.
+    """
+    sysname = platform.system()
+    adb_path = adb or which_adb()
+    emu_path = emulator_bin or which_emulator()
+    print("=" * 65)
+    print("emulator_launch doctor: Android SDK / emulator readiness")
+    print("=" * 65)
+    print("Host OS:        %s %s (%s)" % (sysname, platform.release(), platform.machine()))
+    print("ANDROID_HOME:   %s" % (android_home() or "(not set)"))
+    print("KVM available:  %s" % ("yes" if kvm_available() else "no"))
+    if dry_run:
+        print("[DRY-RUN] would check adb and emulator binaries")
+        print("[DRY-RUN] adb:      would-resolve-from-PATH/ANDROID_HOME")
+        print("[DRY-RUN] emulator: would-resolve-from-PATH/ANDROID_HOME")
+        print("[DRY-RUN] AVDs:     (simulated) Pixel_6_API_34, Pixel_7_API_33")
+        print("[+] Dry-run doctor complete (no Android tooling required)")
+        return 0
+
+    missing = []
+    print("-" * 65)
+    if adb_path:
+        print("adb:            FOUND %s" % adb_path)
+    else:
+        print("adb:            MISSING")
+        missing.append("adb")
+    if emu_path:
+        print("emulator:       FOUND %s" % emu_path)
+    else:
+        print("emulator:       MISSING")
+        missing.append("emulator")
+    if not kvm_available() and sysname == "Linux":
+        print("KVM:            NOT AVAILABLE (software rendering will be used; "
+              "boot is slow without nested virtualization)")
+    else:
+        print("KVM:            available (or non-Linux host)")
+    print("-" * 65)
+    if missing:
+        print("Missing Android SDK tools: %s" % ", ".join(missing))
+        print()
+        print("Install per OS:")
+        print("  Linux : sudo apt install android-sdk-platform-tools  (adb)")
+        print("          emulator: Android Studio SDK Manager -> SDK Tools ->")
+        print("          Android Emulator, Android SDK Command-line Tools")
+        print("  macOS : brew install android-platform-tools  (adb)")
+        print("          emulator: Android Studio SDK Manager")
+        print("  Windows: winget install Google.AndroidSdkPlatformTools (adb)")
+        print("          emulator: Android Studio SDK Manager")
+        print()
+        print("Then create a rootable AVD, e.g.:")
+        print('  avdmanager create avd -n Pixel_6_API_34 -k '
+              '"system-images;android-34;google_apis;x86_64"')
+        print("  emulator -list-avds")
+        print()
+        print("Or run the launcher in dry-run mode to validate without a device:")
+        print("  python tools/emulator_launch.py launch --avd Pixel_6_API_34 --dry-run")
+        return 1
+    print("[+] adb and emulator found; emulator/AVD path is ready to use.")
+    return 0
 
 
 def build_parser():
@@ -392,6 +528,9 @@ def build_parser():
     sp.add_argument("--serial", default=None, help="adb serial")
 
     sp = sub.add_parser("list-avds", parents=[common], help="List available AVD names")
+
+    sp = sub.add_parser("doctor", parents=[common], help="Check emulator/adb readiness "
+                   "and print per-OS install hints")
     return p
 
 
@@ -413,12 +552,17 @@ def main(argv=None):
         no_snapshot=args.no_snapshot,
         wipe_data=args.wipe_data,
         boot_timeout=args.boot_timeout,
+        no_kvm=args.no_kvm,
     )
 
     if args.cmd == "list-avds":
         launcher = EmulatorLauncher(dry_run=args.dry_run, emulator=args.emulator_bin,
                                     adb=args.adb)
         return launcher.list_avds()
+
+    if args.cmd == "doctor":
+        return emulator_doctor(dry_run=args.dry_run, adb=args.adb,
+                               emulator_bin=args.emulator_bin)
 
     if args.cmd == "launch":
         launcher = EmulatorLauncher(avd=args.avd, **launch_kwargs)

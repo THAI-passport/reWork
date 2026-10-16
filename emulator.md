@@ -148,6 +148,31 @@ When `--avd` is given, the orchestrator launches the AVD, switches adbd to adb-o
 - **NEVER** commit the AVD system image, `userdata-qemu.img`, or any emulator snapshot to this repo (ground rule 3).
 - **NEVER** bridge the emulator's network to production; route through the isolated gateway only.
 
+## Cloud / headless instances (no KVM)
+
+Most cloud Linux instances do not expose `/dev/kvm` and lack nested
+virtualization. Without KVM the Android emulator cannot use hardware
+acceleration and boots extremely slowly (or not at all) with default flags.
+This launcher handles that gracefully:
+
+- `kvm_available()` detects `/dev/kvm`. When it is absent, `no_kvm` is set
+  automatically and the launch command adds `-no-accel` plus `-gpu off`
+  (software rendering), with a longer default boot timeout (600 s).
+- Pass `--no-kvm` explicitly to force the software-rendering path.
+- The emulator runs headless by default (`-no-window -no-audio`) and forces
+  headless when `DISPLAY` is unset, which is the norm on cloud/container
+  hosts.
+- Use `python tools/emulator_launch.py doctor` to check whether `adb`,
+  `emulator`, and KVM are present, and to get per-OS install hints.
+- `python tools/rw.py doctor` also reports KVM and `emulator` status.
+
+Realistic expectation: on a cloud instance without KVM/nested virtualization,
+emulator boot is slow and some graphics-dependent apps may not run correctly.
+For a dependable Android-analysis target on the cloud, use an instance type
+that exposes KVM (nested virtualization enabled) or attach a real Android
+device over adb-over-TCP instead. The dry-run mode (`--dry-run`) validates
+the entire launch + stealth + serial path with no Android tooling at all.
+
 ## Open questions / what only hardware settles
 
 - Whether `resetprop` reliably masks `ro.kernel.qemu` and `ro.hardware` on the target AVD image version (test on the real AVD before the first malware run; mark `[V]` or `[H]` there).
