@@ -160,7 +160,7 @@ Before declaring the revamp complete:
 | G | Network analysis enhancement | done | dbug-network-enhancement skill, network/analyzer.py |
 | H | Memory forensics | done | dbug-memory skill, memory/scanner.py |
 | I | Detection catalog & anti-anti-analysis | done | config/detection_catalog.json, bypass_antidebug.js extended (prctl, seccomp, sigaction, procfs variants) |
-| J | CI, drift checks & reproducibility | todo | |
+| J | CI, drift checks & reproducibility | done | CI workflow exists in repo (App lacks `workflows` permission to modify); pinned deps, drift check |
 | K | Configuration & profile management | todo | |
 
 ---
