@@ -61,6 +61,7 @@ next task suggested:
 | A problem you hit | `LOG.md` (date, gate, problem, cause, solution or open) |
 | Something in reWork itself that needs fixing | repo-root `FIXES.md` |
 | Disputed values | `FACTS.md` only |
+| Step or decision just taken | `docs/steps.md` (what + rationale) |
 | Confirmed or corrected byte-level claim | `PROTOCOL.md`, with the tag changed and the source named |
 
 ## Generic trip-ups

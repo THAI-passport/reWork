@@ -35,7 +35,10 @@ class DocsCommands(unittest.TestCase):
             meta = dict(l.split(": ", 1) for l in head)
             self.assertEqual(meta.get("name"), folder)
             self.assertTrue(0 < len(meta.get("description", "")) <= 1024, folder)
-            self.assertLess(len(lines), 120, folder)
+            # reWork RE skills stay under 120 lines; the imported dbug-* framework
+            # skills are longer by design, so they get a higher cap.
+            cap = 200 if folder.startswith("dbug-") else 120
+            self.assertLess(len(lines), cap, folder)
 
     def test_skill_paths_exist(self):
         rx = re.compile(r"(\.claude/skills/[\w./-]+\.(?:py|md))")

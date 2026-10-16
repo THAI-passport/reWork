@@ -7,6 +7,11 @@
     python tools/rw.py recon <dir> [--slug S] [--libs]     grep recipe pack over a decompiled tree -> recon.md
     python tools/rw.py lint [--root DIR]                   fail on vendor artifacts, emoji, secret-looking strings
     python tools/rw.py taskflags <slug>                    every --flag in tasks/*.md code must exist in client/<slug>/ or tools/
+
+Plugin registry: third-party or domain-specific RE tools can register their own
+rw.py subcommands by calling register_plugin(name, handler, setup_parser, description).
+The main() dispatcher builds subparsers from the registry, so adding a new RE
+domain (ios, desktop, firmware, web) never requires editing core dispatch logic.
 """
 import argparse
 import datetime
@@ -21,6 +26,33 @@ import zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SLUG_RX = re.compile(r"^[a-z0-9][a-z0-9-]{0,40}$")
+
+# --- plugin registry -------------------------------------------------------------------------------
+# name -> (handler_fn, setup_parser_fn, description)
+PLUGIN_REGISTRY = {}
+
+
+def register_plugin(name, handler, setup_parser=None, description=""):
+    """Register a new rw.py subcommand plugin.
+
+    handler:    callable(args, root=ROOT) -> int exit code
+    setup_parser: optional callable(parser) to add subcommand-specific arguments
+    description: short help text shown in `rw.py --help`
+    """
+    PLUGIN_REGISTRY[name] = (handler, setup_parser, description)
+
+
+# --- built-in plugins --------------------------------------------------------------
+
+
+def _init_setup(p):
+    p.add_argument("slug")
+    p.add_argument("--name")
+    p.add_argument("--goal")
+
+
+def _lint_setup(p):
+    p.add_argument("--root", default=ROOT)
 
 
 # --- init ------------------------------------------------------------------------------------------
@@ -53,13 +85,19 @@ def cmd_init(a, root=ROOT):
     print("created targets/%s (artifacts/, work/, decompiled/ are git-ignored)" % a.slug)
     return 0
 
+register_plugin("init", cmd_init, _init_setup, "create targets/<slug>/ from templates/")
+
 
 # --- doctor ----------------------------------------------------------------------------------------
 TOOLS = [("python3", ["python3", "--version"], True), ("git", ["git", "--version"], True),
          ("unzip", ["unzip", "-v"], True), ("curl", ["curl", "--version"], True),
          ("java", ["java", "-version"], False), ("jadx", ["jadx", "--version"], False),
          ("apktool", ["apktool", "--version"], False), ("ffmpeg", ["ffmpeg", "-version"], False),
-         ("tshark", ["tshark", "--version"], False), ("adb", ["adb", "version"], False)]
+         ("tshark", ["tshark", "--version"], False), ("adb", ["adb", "version"], False),
+         ("frida", ["frida", "--version"], False), ("objection", ["objection", "--version"], False),
+         ("radare2", ["radare2", "--version"], False), ("rizin", ["rizin", "--version"], False),
+         ("ghidra", ["ghidra", "--version"], False), ("qiling", None, False),
+         ("mitmproxy", ["mitmproxy", "--version"], False), ("binwalk", ["binwalk", "--version"], False)]
 
 
 def cmd_doctor(a):
@@ -78,7 +116,7 @@ def cmd_doctor(a):
             print("%-8s ok  %s" % (name, line[0][:70] if line else ""))
         except Exception as e:  # noqa: BLE001
             print("%-8s error %s" % (name, e))
-    for mod in ("bleak", "PIL", "unicorn", "capstone", "elftools"):
+    for mod in ("bleak", "PIL", "unicorn", "capstone", "elftools", "frida"):
         try:
             __import__(mod)
             print("%-8s ok  (python module)" % mod)
@@ -168,6 +206,14 @@ RECIPES = [
     ("bytes-literal", r"new byte\[\]\s*\{\s*(?:\(byte\)\s*)?-?(?:0x)?[0-9a-fA-F]{1,3}\s*,"),
     ("json-field", r"@SerializedName\(\"[^\"]+\"\)|@Json\(name"),
     ("manifest", r"android\.permission\.(?:BLUETOOTH\w*|NEARBY_WIFI_DEVICES|CHANGE_WIFI_STATE|ACCESS_FINE_LOCATION|USB\w*|FOREGROUND_SERVICE\w*)"),
+    ("ios-macho", r"\.objc_class|class_dump|Mach-O|LC_SEGMENT|LC_SYMTAB|__TEXT|__DATA|Info\.plist|entitlements"),
+    ("ios-frida", r"Frida|frida|gum-js|gadget|cycript|ObjC\.classes|\$objc_class"),
+    ("desktop-pe", r"\.dll|\.exe|PE\s+|\.text|\.rdata|\.idata|\.reloc|LoadLibrary|GetProcAddress"),
+    ("desktop-elf", r"ELF|\.so\.|\.text|\.data|\.bss|dlopen|dlsym|\.init_array|\.fini_array"),
+    ("desktop-macho", r"__TEXT|__DATA|__LINKEDIT|LC_MAIN|dyld|\.dylib|mach_header"),
+    ("firmware", r"binwalk|squashfs|jffs2|U-Boot|\.bin|firmware|rootfs|bootloader|jtag|uart"),
+    ("electron", r"asar|\.asar|electron|BrowserWindow|webPreferences|nodeIntegration|contextIsolation|require\("),
+    ("smali", r"\.class\.|\.method|\.end method|invoke-|const-string|new-instance"),
 ]
 SCAN_EXT = (".java", ".kt", ".smali", ".xml", ".json", ".js", ".txt")
 
@@ -316,19 +362,28 @@ def cmd_taskflags(a, root=ROOT):
     return 1 if missing else 0
 
 
+def _taskflags_setup(p):
+    p.add_argument("slug")
+
+
+register_plugin("doctor", cmd_doctor, None, "report which RE tools are installed")
+register_plugin("hash", cmd_hash, None, "size + SHA-256 (+ XAPK/APK info); append to SOURCES.md")
+register_plugin("recon", cmd_recon, None, "grep recipe pack over a decompiled tree -> recon.md")
+register_plugin("lint", cmd_lint, _lint_setup, "fail on vendor artifacts, emoji, secret-looking strings")
+register_plugin("taskflags", cmd_taskflags, _taskflags_setup, "every --flag in tasks/*.md must exist in client/<slug>/ or tools/")
+
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
-    s = sub.add_parser("init"); s.add_argument("slug"); s.add_argument("--name"); s.add_argument("--goal")
-    sub.add_parser("doctor")
-    s = sub.add_parser("hash"); s.add_argument("file"); s.add_argument("--slug")
-    s = sub.add_parser("recon"); s.add_argument("dir"); s.add_argument("--slug"); s.add_argument("--libs", action="store_true")
-    s.add_argument("--limit", type=int, default=15)
-    s = sub.add_parser("lint"); s.add_argument("--root", default=ROOT)
-    s = sub.add_parser("taskflags"); s.add_argument("slug")
+    for name, (handler, setup_parser, description) in PLUGIN_REGISTRY.items():
+        s = sub.add_parser(name, help=description)
+        if setup_parser:
+            setup_parser(s)
     a = p.parse_args(argv)
-    return {"init": cmd_init, "doctor": cmd_doctor, "hash": cmd_hash, "recon": cmd_recon, "lint": cmd_lint,
-            "taskflags": cmd_taskflags}[a.cmd](a)
+    return PLUGIN_REGISTRY[a.cmd][0](a)
+
 
 
 if __name__ == "__main__":
