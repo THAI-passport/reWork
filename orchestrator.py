@@ -84,7 +84,9 @@ def parse_lab_config(config_path):
 
 class MasterOrchestrator:
     def __init__(self, apk_path, package_name, duration=120, config_path="config/lab_config.yaml",
-                 output_dir=None, dry_run=False, profile="malware", interactive=False, apply_dev_hide=True):
+                 output_dir=None, dry_run=False, profile="malware", interactive=False,
+                 apply_dev_hide=True, avd=None, emulator_tcp_port=5557,
+                 emulator_port=5554, keep_emulator=False):
         self.apk_path = apk_path
         self.package_name = package_name
         self.duration = duration
@@ -93,6 +95,11 @@ class MasterOrchestrator:
         self.profile = profile.lower()
         self.interactive = interactive
         self.apply_dev_hide = apply_dev_hide
+        self.avd = avd
+        self.emulator_tcp_port = int(emulator_tcp_port)
+        self.emulator_port = int(emulator_port)
+        self.keep_emulator = keep_emulator
+        self._stop_emulator = False
 
         ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         self.output_dir = output_dir or f"./sessions/session_{ts}_{self.package_name}"
@@ -144,6 +151,40 @@ class MasterOrchestrator:
 
         os.makedirs(self.output_dir, exist_ok=True)
         py_bin = sys.executable
+
+        # -------------------------------------------------------------
+        # Stage 0.5: Emulator Launch + adb-over-TCP (only with --avd)
+        # -------------------------------------------------------------
+        if self.avd:
+            emu_cmd = [
+                py_bin, "tools/emulator_launch.py", "launch",
+                "--avd", self.avd,
+                "--tcp-port", str(self.emulator_tcp_port),
+                "--emulator-port", str(self.emulator_port),
+            ]
+            if self.dry_run:
+                emu_cmd.append("--dry-run")
+            print("\n" + "=" * 65)
+            print("[*] EXECUTING STAGE: Stage 0.5: Emulator Launch + adb-over-TCP")
+            print("=" * 65)
+            print("Command: %s" % " ".join(emu_cmd))
+            res = subprocess.run(emu_cmd, capture_output=True, text=True, check=False)
+            if res.stdout:
+                print(res.stdout, end="")
+            if res.returncode != 0:
+                if res.stderr:
+                    print(res.stderr, end="")
+                print("\n[!] HALT: Emulator launch failed! Cannot proceed without a target device.",
+                      file=sys.stderr)
+                sys.exit(1)
+            m = re.search(r"^SERIAL:\s*(\S+)\s*$", res.stdout, re.MULTILINE)
+            if not m:
+                print("\n[!] HALT: Emulator launch did not emit a TCP serial (SERIAL: <host:port>).",
+                      file=sys.stderr)
+                sys.exit(1)
+            self.serial = m.group(1)
+            self._stop_emulator = (self.avd and not self.keep_emulator)
+            print("[+] Emulator TCP serial: %s" % self.serial)
 
         # -------------------------------------------------------------
         # Stage 0: Sample Intake & Static Triage (Gate G0)
@@ -292,6 +333,14 @@ class MasterOrchestrator:
         if self.serial:
             sanitize_cmd.extend(["--serial", self.serial])
         self.run_stage("Teardown: Device State Sanitization & Baseline Restore", sanitize_cmd, check=False)
+
+        # Stop the emulator we launched (unless --keep-emulator), after sanitization.
+        if self._stop_emulator:
+            emu_stop = [py_bin, "tools/emulator_launch.py", "stop",
+                        "--avd", self.avd]
+            if self.dry_run:
+                emu_stop.append("--dry-run")
+            self.run_stage("Teardown: Stop Emulator", emu_stop, check=False)
 
         # -------------------------------------------------------------
         # Stage 6: Decryption & Correlation Post-Processing (Gate G5)
@@ -640,6 +689,14 @@ def main():
                         help="Disable developer option hiding (HideDevMode is ON by default)")
     parser.add_argument("--apply-dev-hide", dest="apply_dev_hide", action="store_true", default=True,
                         help="Apply developer option hiding before analysis (ON by default)")
+    parser.add_argument("--avd", default=None,
+                        help="Launch this AVD instead of a USB device (adb-over-TCP; opt-in)")
+    parser.add_argument("--emulator-tcp-port", type=int, default=5557,
+                        help="adb-over-TCP port for the emulator (default 5557)")
+    parser.add_argument("--emulator-port", type=int, default=5554,
+                        help="emulator base port (default 5554; adb is base+1)")
+    parser.add_argument("--keep-emulator", action="store_true",
+                        help="Leave the emulator running after the pipeline (stop by default)")
     args = parser.parse_args()
 
     # --sanitize runs the six-tier device teardown and exits before any analysis.
@@ -690,7 +747,11 @@ def main():
         dry_run=args.dry_run,
         profile=profile,
         interactive=args.interactive,
-        apply_dev_hide=args.apply_dev_hide
+        apply_dev_hide=args.apply_dev_hide,
+        avd=args.avd,
+        emulator_tcp_port=args.emulator_tcp_port,
+        emulator_port=args.emulator_port,
+        keep_emulator=args.keep_emulator,
     )
 
     orchestrator.execute_pipeline()

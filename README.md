@@ -39,6 +39,7 @@ Pass criteria: `targets/<slug>/` has SOURCES.md with hashes, a PROTOCOL.md where
 | `docs/NEXT-PASS-PROMPT.md` | Prompt for an agent pass over reBeamBox, reWork and reWatch |
 | `templates/` | TARGET, SOURCES, FACTS, PROTOCOL, LOG, HANDOFF |
 | `tools/rw.py` | `init`, `doctor`, `hash`, `recon`, `lint`, `taskflags` (stdlib only) |
+| `tools/emulator_launch.py` | Launch an Android AVD over adb-over-TCP with stealth cloaking; dry-run capable; hands a TCP serial to the dbug pipeline (see `emulator.md`) |
 | `tools/btcap.py` | btsnoop/pcap/pcapng to ATT write/notify table by UUID |
 | `tools/scrub_capture.py` | Mask addresses, tokens and named literals in a btcap summary, length-preserving |
 | `tools/crcfind.py` | Identify a CRC from sample frames |
