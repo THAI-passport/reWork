@@ -1,6 +1,18 @@
 #!/system/bin/sh
 # apply_stealth_props.sh: Masks Android system properties to present an un-debugged production state.
 # Designed for Magisk, KernelSU, and APatch environments using resetprop.
+#
+# TWO-LAYER CLOAKING MODEL (see fork-v1.md, Gate G1):
+#   Layer A - this script (kernel/property layer via resetprop):
+#       ro.debuggable=0, ro.secure=1, ro.build.type=user, ro.build.tags=release-keys,
+#       sys.usb.state=mtp, sys.usb.config=mtp, persist.sys.usb.config=mtp,
+#       init.svc.adbd=stopped (adbd transport stays alive; only user-space state is masked).
+#   Layer B - LSPosed HideDevMode (dongdevcom/HideDevMode, system_server Binder layer):
+#       Hooks Settings.Global so target apps read adb_enabled=0 and
+#       development_settings_enabled=0 across app-process restarts. A one-shot
+#       `settings put global` shell command cannot guarantee that. Install the
+#       HideDevMode release APK, enable the module in LSPosed Manager for the
+#       target package, reboot, then verify with verify_stealth_state.py (Layer 6).
 # Usage:
 #   apply_stealth_props.sh apply    - Mask properties for malware analysis
 #   apply_stealth_props.sh restore  - Revert properties for standard debugging

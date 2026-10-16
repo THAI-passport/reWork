@@ -1,0 +1,16 @@
+# dbug - Automated Stealth Android Dynamic Analysis, Threat Intelligence & AppSec Toolkit
+# Dependencies specification
+
+# Core YAML configuration parser
+pyyaml>=6.0
+
+# Dynamic Instrumentation & Frida agent bindings
+frida>=16.0.0
+frida-tools>=12.0.0
+
+# ELF parsing and inspection for native libraries (.so)
+pyelftools>=0.29
+
+# CPU emulation and disassembly for defensive native string decryptor analysis (Gate G0)
+unicorn>=2.0.1
+capstone>=5.0.0

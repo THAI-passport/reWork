@@ -28,5 +28,6 @@ sslkey.log
 *.log
 .env
 
-# dbug orchestrator auto-generated target workspaces (test output, not source)
+# dbug orchestrator auto-generated target workspaces (test runtime output, not source)
 targets/current_sample/
+targets/simulated_*/

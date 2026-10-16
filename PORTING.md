@@ -58,12 +58,12 @@ The dbug Android dynamic analysis / AppSec / privacy auditing framework has been
 | 17 skills (`.claude/skills/dbug-*`) | `.claude/skills/dbug-*` |
 | `orchestrator.py`, `parser_correlator/`, `sample_triage/`, `device_cloaking/`, `network_capture/`, `instrumentation/` | repo root (preserves dbug's relative-path structure) |
 | `config/` (lab_config.yaml, mock_canaries.json, tracker_catalog.json, seed_canaries.py) | `config/` |
-| `docs/` (SOP, steps, roadmap, task plans, debug notes) | `docs/` |
-| `tests/test_framework_e2e.py` | `tests/test_dbug_framework.py` |
+| `docs/` (SOP, steps) | `docs/` + `fork-v1.md`, `hide_dev.md` (repo root) |
+| `tests/test_framework_e2e.py` | `tests/test_dbug_framework.py` (16-suite) and `tests/test_framework_e2e.py` (22-suite expanded) |
 
 Not ported (intentionally): `targets/*` sample-specific analysis workspaces (contain per-sample IOCs and reports; target-scoped, not framework), `samples/` (vendor artifacts, never committed).
 
 Adjustments made for reWork compatibility:
 - Fixed Python 3.11 f-string quote conflict in `orchestrator.py` (nested same-quote f-string on the YARA rule path line).
-- Added dbug-generated artifact patterns to `.gitignore` (`sessions/`, `captures/`, `*.pcap`, `*.pcapng`, `sslkey.log`, `*.log`, `.env`).
-- Verified: `python tools/rw.py lint` -> 0 problems; `python3 -m unittest discover -s tests` -> 26 tests OK (10 reWork + 16 dbug).
+- Added dbug-generated artifact patterns to `.gitignore` (`sessions/`, `captures/`, `*.pcap`, `*.pcapng`, `sslkey.log`, `*.log`, `.env`, `targets/current_sample/`, `targets/simulated_*/`).
+- Verified: `python tools/rw.py lint` -> 0 problems; `python3 -m unittest discover -s tests` -> 48 tests OK (10 reWork + 16 dbug + 22 expanded dbug).

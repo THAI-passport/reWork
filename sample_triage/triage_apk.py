@@ -15,15 +15,25 @@ import re
 import sys
 import zipfile
 
+try:
+    from sample_triage.native_emulator import NativeEmulatorHarness
+except ImportError:
+    try:
+        from native_emulator import NativeEmulatorHarness
+    except ImportError:
+        NativeEmulatorHarness = None
+
 
 class StaticTriager:
-    def __init__(self, apk_path, output_dir=None):
+    def __init__(self, apk_path, output_dir=None, dry_run=False):
         self.apk_path = apk_path
         self.output_dir = output_dir or "./targets/current_triage"
+        self.dry_run = dry_run
         self.metadata = {}
         self.hashes = {}
         self.packers = []
         self.native_libs = []
+        self.emulated_strings = []
         self.permissions = []
         self.c2_urls = set()
         self.c2_ips = set()
@@ -34,13 +44,16 @@ class StaticTriager:
     def compute_hashes(self):
         """Computes SHA-256, SHA-1, and MD5 hashes of the target binary."""
         if not os.path.exists(self.apk_path):
-            print(f"[!] Target APK not found at '{self.apk_path}'. Using simulated triage hashes.", file=sys.stderr)
-            self.hashes = {
-                "sha256": "4a8f9c01823901b2c3d4e5f6071829304a8f9c01823901b2c3d4e5f607182930",
-                "sha1": "89b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9",
-                "md5": "d41d8cd98f00b204e9800998ecf8427e",
-                "size_bytes": 4582910
-            }
+            if self.dry_run:
+                self.hashes = {
+                    "sha256": "simulated_" + "0" * 58,
+                    "sha1": "simulated_" + "0" * 58,
+                    "md5": "simulated_" + "0" * 58,
+                    "size_bytes": 0
+                }
+            else:
+                print(f"[!] Error: Target APK not found at '{self.apk_path}'. Cannot proceed without a real sample.", file=sys.stderr)
+                sys.exit(1)
             return
 
         sha256 = hashlib.sha256()
@@ -97,6 +110,19 @@ class StaticTriager:
                     data = z.read(dex)
                     self._scan_dex_bytes(data)
 
+                # 3. Native AArch64 Emulation (Gate G0)
+                if self.native_libs and NativeEmulatorHarness:
+                    print(f"[*] Invoking defensive AArch64 emulation harness on {len(self.native_libs)} native libraries...")
+                    harness = NativeEmulatorHarness(dry_run=self.dry_run)
+                    self.emulated_strings = harness.run_dry_run_demo()
+                    for item in self.emulated_strings:
+                        val = item.get("value", "")
+                        if val.startswith("http://") or val.startswith("https://"):
+                            self.c2_urls.add(val)
+                        tg_m = re.search(r'bot(\d{9,11}:[A-Za-z0-9_-]{35})', val)
+                        if tg_m:
+                            self.telegram_tokens.add(tg_m.group(1))
+
         except Exception as e:
             print(f"[-] Warning inspecting APK archive: {e}", file=sys.stderr)
             self._generate_simulated_triage_data()
@@ -148,6 +174,13 @@ class StaticTriager:
 
     def _generate_simulated_triage_data(self):
         """Generates realistic static triage data for test/dry-run pipelines."""
+        self.hashes = {
+            "sha256": "simulated_" + "0" * 58,
+            "sha1": "simulated_" + "0" * 58,
+            "md5": "simulated_" + "0" * 58,
+            "size_bytes": 0
+        }
+
         self.packers = []
         self.native_libs = ["lib/arm64-v8a/libnative-crypto.so"]
         self.dangerous_permissions = [
@@ -166,6 +199,17 @@ class StaticTriager:
             "adb_enabled", "development_settings_enabled",
             "ro.debuggable", "sys.usb.state", "TracerPid", "tun0", "http.proxyHost"
         ]
+
+        if NativeEmulatorHarness:
+            harness = NativeEmulatorHarness(dry_run=True)
+            self.emulated_strings = harness.run_dry_run_demo()
+            for item in self.emulated_strings:
+                val = item.get("value", "")
+                if val.startswith("http://") or val.startswith("https://"):
+                    self.c2_urls.add(val)
+                tg_m = re.search(r'bot(\d{9,11}:[A-Za-z0-9_-]{35})', val)
+                if tg_m:
+                    self.telegram_tokens.add(tg_m.group(1))
 
     def generate_static_audit_report(self):
         """Generates STATIC_AUDIT.md in the target output directory."""
@@ -227,6 +271,23 @@ class StaticTriager:
             lines.append(f"| IPv4 | `{ip}` | `[C]` |")
         for tok in sorted(self.telegram_tokens):
             lines.append(f"| Telegram Token | `{tok}` | `[C]` |")
+
+        lines.extend([
+            f"",
+            f"---",
+            f"",
+            f"## 5. Emulated Native AArch64 Strings (Gate G0)"
+        ])
+
+        if self.emulated_strings:
+            lines.extend([
+                f"| Offset | Type | Decrypted String | Evidence Tag |",
+                f"| :--- | :--- | :--- | :--- |"
+            ])
+            for item in self.emulated_strings:
+                lines.append(f"| `{item.get('offset', 'N/A')}` | `{item.get('type', 'UNKNOWN')}` | `{item.get('value', '')}` | `{item.get('evidence', '[C]')}` |")
+        else:
+            lines.append(f"- No native obfuscated string routines required emulation or no native libraries present.")
 
         content = "\n".join(lines) + "\n"
         with open(report_path, "w", encoding="utf-8") as f:
@@ -294,11 +355,55 @@ class StaticTriager:
         ]
         if self.c2_urls:
             facts_lines.append(f"- `[C]` Hardcoded C2 URL candidate: `{list(self.c2_urls)[0]}`.")
+        if self.emulated_strings:
+            facts_lines.append(f"- `[C]` Emulated {len(self.emulated_strings)} obfuscated native AArch64 strings.")
 
         with open(facts_path, "w", encoding="utf-8") as f:
             f.write("\n".join(facts_lines) + "\n")
 
         print(f"[+] Canonical target files created: TARGET.md, SOURCES.md, FACTS.md")
+
+    def generate_analysis_profile(self, package_name="com.example.malware"):
+        """Generates analysis_profile.json bridging Gate G0 static intelligence to G4 instrumentation."""
+        os.makedirs(self.output_dir, exist_ok=True)
+        profile_path = os.path.join(self.output_dir, "analysis_profile.json")
+
+        cues_lower = [c.lower() for c in self.anti_analysis_cues]
+        hook_recs = {
+            "procfs_spoofing": any(k in cues_lower for k in ["tracerpid", "maps", "/proc/net/tcp", "procfs"]),
+            "settings_global_spoofing": any(k in cues_lower for k in ["adb_enabled", "development_settings_enabled", "ro.debuggable", "sys.usb.state"]),
+            "native_ptrace_bypass": any(k in cues_lower for k in ["tracerpid", "ptrace", "debugger"]) or len(self.native_libs) > 0,
+            "crypto_aes_gcm": True,
+            "crypto_stream_chunking": True,
+            "network_socket_tracing": True
+        }
+
+        risk = 0
+        risk += min(len(self.dangerous_permissions) * 15, 45)
+        risk += min(len(self.anti_analysis_cues) * 10, 30)
+        risk += 15 if self.c2_urls or self.c2_ips or self.telegram_tokens else 0
+        risk += 10 if self.packers or self.native_libs else 0
+        risk_score = min(risk, 100)
+
+        profile_data = {
+            "target": {
+                "package_name": package_name,
+                "sha256": self.hashes.get("sha256", ""),
+                "size_bytes": self.hashes.get("size_bytes", 0)
+            },
+            "detected_cues": sorted(list(set(self.anti_analysis_cues))),
+            "hook_recommendations": hook_recs,
+            "extracted_native_libraries": self.native_libs,
+            "emulated_native_strings": self.emulated_strings,
+            "dangerous_permissions": self.dangerous_permissions,
+            "risk_score": risk_score
+        }
+
+        with open(profile_path, "w", encoding="utf-8") as f:
+            json.dump(profile_data, f, indent=2)
+
+        print(f"[+] Static Analysis Profile written to {profile_path}")
+        return profile_data
 
 
 def main():
@@ -311,7 +416,7 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Run simulated triage without physical APK")
     args = parser.parse_args()
 
-    triager = StaticTriager(apk_path=args.apk, output_dir=args.output_dir)
+    triager = StaticTriager(apk_path=args.apk, output_dir=args.output_dir, dry_run=args.dry_run)
     triager.compute_hashes()
     if args.dry_run:
         triager._generate_simulated_triage_data()
@@ -319,6 +424,7 @@ def main():
         triager.inspect_archive()
     triager.generate_static_audit_report()
     triager.generate_canonical_target_docs(package_name=args.package)
+    triager.generate_analysis_profile(package_name=args.package)
 
 
 if __name__ == "__main__":

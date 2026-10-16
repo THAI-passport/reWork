@@ -239,8 +239,7 @@ class TestDbugFramework(unittest.TestCase):
             self.assertTrue(os.path.exists(os.path.join(tmp_dir, "analysis_report.md")))
 
             # Verify target directory sync per AGENTS.md contract
-            sample_hash = "4a8f9c01823901b2c3d4e5f6071829304a8f9c01823901b2c3d4e5f607182930"
-            target_dir = os.path.join(WORKSPACE_DIR, "targets", sample_hash)
+            target_dir = os.path.join(WORKSPACE_DIR, "targets", "current_sample")
             self.assertTrue(os.path.exists(os.path.join(target_dir, "TARGET.md")))
             self.assertTrue(os.path.exists(os.path.join(target_dir, "SOURCES.md")))
             self.assertTrue(os.path.exists(os.path.join(target_dir, "FACTS.md")))
