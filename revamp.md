@@ -154,7 +154,7 @@ Before declaring the revamp complete:
 | A | Platform-agnostic core & plugin system | done | tools/rw.py plugin registry, doctor/recon expanded |
 | B | iOS static/dynamic tooling | done | dbug-ios-static, dbug-ios-dynamic skills, ios_static.py, ios_dynamic.py |
 | C | Desktop static/dynamic tooling | done | dbug-desktop-static, dbug-desktop-dynamic skills, desktop_static.py, desktop_dynamic.py |
-| D | Firmware / embedded RE | todo | |
+| D | Firmware / embedded RE | done | dbug-firmware-static, dbug-firmware-dynamic skills, firmware_static.py |
 | E | Web / Electron RE | todo | |
 | F | Emulation & symbolic execution | todo | |
 | G | Network analysis enhancement | todo | |
