@@ -417,6 +417,35 @@ class TestDbugFramework(unittest.TestCase):
             self.assertTrue(os.path.exists(os.path.join(tmp_dir, "REPORT.md")))
             self.assertTrue(os.path.exists(os.path.join(tmp_dir, "IOCS.json")))
 
+    def test_23_frida_module_available(self):
+        """Frida Integration: Test frida Python module imports and exposes a usable version."""
+        import frida
+        self.assertIsNotNone(frida.__version__)
+        self.assertTrue(frida.__version__.startswith(("16.", "17.")))
+
+    def test_24_frida_device_manager(self):
+        """Frida Integration: Test frida device manager enumerates devices (no Android required)."""
+        import frida
+        mgr = frida.get_device_manager()
+        devices = mgr.enumerate_devices()
+        self.assertIsInstance(devices, list)
+        self.assertGreaterEqual(len(devices), 1)
+
+    def test_25_frida_loader_no_device_graceful(self):
+        """Frida Integration: Test loader exits gracefully when frida-server is not reachable."""
+        res = self.run_cmd([
+            PYTHON_BIN, "instrumentation/frida_loader.py",
+            "--package", "com.example.malware",
+            "--duration", "1",
+        ], check=False)
+        # No frida-server on 127.0.0.1:38921 -> spawn fails, returns nonzero, no crash
+        self.assertNotEqual(res.returncode, None)
+        self.assertNotEqual(res.returncode, 0)
+        self.assertTrue(
+            "frida-server" in res.stderr or "Failed to connect" in res.stderr or "Failed to spawn" in res.stderr,
+            "Expected a frida-server/connection error in stderr, got: %s" % res.stderr,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

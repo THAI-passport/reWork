@@ -70,7 +70,7 @@ def cmd_doctor(a):
             print("%-8s ok  %s" % (name, line[0][:70] if line else ""))
         except Exception as e:  # noqa: BLE001
             print("%-8s error %s" % (name, e))
-    for mod in ("bleak", "PIL", "unicorn", "capstone", "elftools"):
+    for mod in ("bleak", "PIL", "unicorn", "capstone", "elftools", "frida"):
         try:
             __import__(mod)
             print("%-8s ok  (python module)" % mod)

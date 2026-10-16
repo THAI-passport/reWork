@@ -288,7 +288,8 @@ def main():
     signal.signal(signal.SIGINT, sig_handler)
     signal.signal(signal.SIGTERM, sig_handler)
 
-    loader.run(script_paths, duration=duration)
+    ok = loader.run(script_paths, duration=duration)
+    sys.exit(0 if ok else 1)
 
 
 if __name__ == "__main__":
