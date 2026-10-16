@@ -151,7 +151,7 @@ Before declaring the revamp complete:
 
 | Phase | Title | Status | Evidence |
 |---|---|---|---|
-| A | Platform-agnostic core & plugin system | todo | |
+| A | Platform-agnostic core & plugin system | done | tools/rw.py plugin registry, doctor/recon expanded |
 | B | iOS static/dynamic tooling | todo | |
 | C | Desktop static/dynamic tooling | todo | |
 | D | Firmware / embedded RE | todo | |
