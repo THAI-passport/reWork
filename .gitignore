@@ -22,15 +22,8 @@ targets/*/BUILD-INFO.txt
 testmedia/
 dumps/
 
-# dbug framework generated artifacts (never commit captures, keys, or session data)
-sessions/
-captures/
+# Captures and secrets (never commit raw captures, tokens, or env files)
 *.pcap
 *.pcapng
-sslkey.log
 *.log
 .env
-
-# dbug orchestrator auto-generated target workspaces (test runtime output, not source)
-targets/current_sample/
-targets/simulated_*/

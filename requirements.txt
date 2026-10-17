@@ -1,17 +1,12 @@
-# dbug - Automated Stealth Android Dynamic Analysis, Threat Intelligence & AppSec Toolkit
+# reWork - target-agnostic reverse-engineering workflow
 # Dependencies specification
 
 # Core YAML configuration parser
 pyyaml>=6.0
 
-# Dynamic Instrumentation & Frida agent bindings
-# Pinned to versions verified working together in this container (frida 17.24.0 / frida-tools 14.11.0).
-frida==17.24.0
-frida-tools==14.11.0
-
 # ELF parsing and inspection for native libraries (.so)
 pyelftools>=0.29
 
-# CPU emulation and disassembly for defensive native string decryptor analysis (Gate G0)
+# CPU emulation and disassembly for native auth/crypto/CRC function recovery (re-native-emulation)
 unicorn>=2.0.1
 capstone>=5.0.0
